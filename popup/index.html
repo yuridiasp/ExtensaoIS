@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>IS Generator</title>
+</head>
+
+<body>
+    <div id="travessao"></div>
+    <div id="acaoBTN">
+        <input id="restore" type="button" value="RESTAURAR ÚLTIMO">
+        <input id="reset" type="button" value="LIMPAR">
+    </div>
+    <h3>EXTENSÃO PARA ANÁLISE DE IS</h3>
+    <div>
+        <form action="">
+            <div id="datapub">
+                <label for="publicacao">Data da Publicação: </label>
+                <input type="date" name="publicacao" id="publicacao">
+            </div>
+            <section id="processoCampos">
+                <div>
+                    <div>
+                        <div>
+                            <div>
+                                <label for="processo">PROCESSO: </label>
+                            </div>
+                            <input class="textbox reset seletor focar" type="number" name="processo" id="processo">
+                        </div>
+                        <div>
+                            <div>
+                                <label for="origem">ORIGEM: </label>
+                            </div>
+                            <input class="textbox reset seletor focar" type="number" name="origem" id="origem">
+                        </div>
+                    </div>
+                    <div>
+                        <div>
+                            <label for="tipoIntimacao">Tipo de Intimacao: </label>
+                        </div>
+                        <input class="textbox reset seletor focar campo" type="text" name="tipoIntimacao" id="tipoIntimacao">
+                        <div class="sugestoes" style="display: none"></div>
+                    </div>
+                </div>
+                <div class="oculto" id="divPericia">
+                    <h4>INFORMAÇÕES DA PERÍCIA</h4>
+                    <div>
+                        <div>
+                            <label for="perito">PERITO: </label>
+                        </div>
+                        <input class="textbox reset seletor" type="text" name="perito" id="perito">
+                    </div>
+                    <div>
+                        <div>
+                            <label for="localPericia">LOCAL: </label>
+                        </div>
+                        <input class="textbox reset seletor" type="text" name="localPericia" id="localPericia">
+                    </div>
+                </div>
+                <div class="oculto" id="divAudiencia">
+                    <h4>INFORMAÇÕES DA AUDIÊNCIA</h4>
+                    <div>
+                        <div>
+                            <label for="reu">RÉU: </label>
+                        </div>
+                        <input class="textbox reset seletor" type="text" name="reu" id="reu">
+                    </div>
+                    <div>
+                        <div>
+                            <label for="localAudiencia">LOCAL: </label>
+                        </div>
+                        <input class="textbox reset seletor" type="text" name="localAudiencia" id="localAudiencia">
+                    </div>
+                </div>
+            </section>
+            <h4>PRAZO EM DIAS: </h4>
+            <div id="divPrazo">
+                <input class="prazo" type="button" value="1">
+                <input class="prazo" type="button" value="5">
+                <input class="prazo" type="button" value="10">
+                <input class="prazo" type="button" value="15">
+                <input class="prazo" type="button" value="20">
+                <input class="prazo" type="button" value="30">
+                <input class="prazo" type="button" value="60">
+            </div>
+            <div>
+                <label for="prazoInicial">Prazo Inicial: </label>
+                <input class="seletor reset" type="date" name="prazoInicial" id="prazoInicial">
+            </div>
+            <div>
+                <label for="prazoFinal">Prazo Final: </label>
+                <input class="seletor reset" type="date" name="prazoFinal" id="prazoFinal">
+            </div>
+            <div>
+                <label for="horario">Horário: </label>
+                <input class="seletor reset" type="time" name="horario" id="horario">
+            </div>
+            <div>
+                <h4 id="tituloExc">SETOR RESPONSÁVEL: </h4>
+                <div id="divBTN">
+                    <div>
+                        <div>
+                            <input class="btn-exc" type="button" value="BANCÁRIO" id="bancario">
+                        </div>
+                        <div>
+                            <input class="btn-exc" type="button" value="CÍVIL" id="civil">
+                        </div>
+                        <div>
+                            <input class="btn-exc" type="button" value="PREVIDENCIÁRIO" id="previdenciario">
+                        </div>
+                    </div>
+                    <div>
+                        <div>
+                            <input class="btn-exc" type="button" value="TRABALHISTA" id="trabalhista">
+                        </div>
+                        <div>
+                            <input class="btn-exc" type="button" value="ADM" id="adm">
+                        </div>
+                        <div>
+                            <input class="btn-exc" type="button" value="FINANCEIRO" id="financeiro">
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <input class="btn-exc btn-ok" type="button" value="OK" id="OK">
+                </div>
+            </div>
+            <div>
+                <textarea class="reset" id="genTXT" style="resize: none" disabled></textarea>
+            </div>
+        </form>
+    </div>
+    <script src="../chromeUtils.js"></script>
+    <script src="../background/background.js"></script>
+    <script src="main.js" defer></script>
+</body>
+
+</html>

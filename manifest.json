@@ -1,0 +1,41 @@
+{
+    "name": "IS Extension",
+    "version": "1.0",
+    "icons": {
+        "180": "icon.png"
+    },
+    "background": {
+        "service_work": "background/background.html"
+    },
+    "description": "Ferramenta para auxílio na análise de IS's.",
+    "action": {
+        "default_title": "Análise IS",
+        "default_popup": "popup/index.html"
+    },
+    "content_scripts": [
+      {
+          "matches": [
+              "https://www.tjse.jus.br/tjnet/portaladv/*"
+          ],
+          "js": [
+              "chromeUtils.js",
+              "content.js"
+          ]
+      }
+  ],
+    "permissions": [
+        "tabs",
+        "storage"
+    ],
+    "commands": {
+        "_execute_browser_action": {
+          "suggested_key": {
+            "windows": "Ctrl+Q",
+            "mac": "Ctrl+Q",
+            "chromeos": "Ctrl+Q",
+            "linux": "Ctrl+Q"
+          }
+        }
+      },
+    "manifest_version": 3
+}

@@ -1,0 +1,158 @@
+* {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    list-style-type: 0;
+    box-sizing: border-box;
+    text-decoration: none;
+}
+
+body {
+    text-align: center;
+    align-items: center;
+    padding: 10px 10px 5px 10px;
+}
+
+p {
+    padding-top: 10px;
+}
+
+#mensagem {
+    font-size: 0.8em;
+    padding-bottom: 5px;
+}
+
+.btn-exc {
+    background: rgb(71, 61, 63);
+    border-radius: 30px;
+    width: 130px;
+    padding: 5px 15px;
+    color: white;
+    font-size: 0.9em;
+}
+
+#divBTN {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+#divBTN h4 {
+    padding-top: 10px;
+}
+
+#divBTN input {
+    margin: 5px;
+}
+
+#tituloExc {
+    padding-top: 10px;
+}
+
+.textbox {
+    border: 0.2em solid;
+    border-radius: 5px;
+    margin: 5px 0px 15px 0px;
+}
+
+#genTXT {
+    margin-top: 5px;
+    width: 100%;
+    height: 35px;
+    border-radius: 5px;
+    background: grey;
+    color: white;
+    text-align: center;
+    word-wrap: break-word;
+    align-items: center;
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+#travessao {
+    background: gray;
+    width: 100%;
+    height: 5px;
+    border-radius: 3px;
+}
+
+.prazo {
+    background: rgb(141, 94, 103);
+    border-radius: 5px;
+    color: white;
+    font-size: 0.9em;
+    width: 30px;
+    height: 30px;
+    margin: 0 5px;
+}
+
+#divPrazo {
+    margin: 10px;
+}
+
+#restore {
+    background: rgb(150, 161, 52);
+    border-radius: 30px;
+    width: 140px;
+    padding: 5px 15px;
+    color: white;
+    font-size: 0.9em;
+}
+
+#reset {
+    background: rgb(126, 16, 38);
+    border-radius: 30px;
+    width: 140px;
+    padding: 5px 15px;
+    color: white;
+    font-size: 0.9em;
+}
+
+#datapub {
+    margin-top: 10px;
+}
+
+#processoCampos {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+#processoCampos div {
+    margin: 0px 5px;
+}
+
+.oculto {
+    display: none;
+}
+
+#acaoBTN {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+#acaoBTN input {
+    margin: 10px;
+}
+
+#divAudiencia, #divPericia {
+    background: rgba(255, 217, 0, 0.781);
+    border-radius: 5px;
+    padding: 5px;
+}
+
+.btn-ok {
+    width: 270px;
+    margin: 5px 0 0 0;
+}
