@@ -474,8 +474,8 @@ function getExecutor (setor) {
         if (setor == "CÍVIL") {
             let daniel = ["0","1","4","6","8"]
             if (daniel.includes(digito) || intimacao.search("PAUTA") > -1 || intimacao.search("AUDIÊNCIA") == 0)
-                return "DANIEL"
-            return "RODRIGO"
+                return "ALÃ"
+            return "ALÃ"
         }
         else
             if (setor == "PREVIDENCIÁRIO"){
