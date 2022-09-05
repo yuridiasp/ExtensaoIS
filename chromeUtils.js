@@ -8,28 +8,20 @@ function onExtensionInstalled(listener) {
     chromeRuntimeOnInstalledAddListener(listener)
 }
 
-function getProcesso() {
+function getAnalise() {
     return chromeStorageLocalGet('is')
 }
 
-function setProcesso(processoValue) {
+function setAnalise(processoValue) {
     return chromeStorageLocalSet({ is: processoValue })
 }
 
-function getProcessoOld() {
+function getAnaliseOld() {
     return chromeStorageLocalGet('isOld')
 }
 
-function setProcessoOld(processoValue) {
+function setAnaliseOld(processoValue) {
     return chromeStorageLocalSet({ isOld: processoValue })
-}
-
-function getDataPub() {
-    return chromeStorageLocalGet('datePub')
-}
-
-function setDataPub(datePub) {
-    return chromeStorageLocalSet({datePub: datePub})
 }
 
 function chromeStorageLocalGet(key) {

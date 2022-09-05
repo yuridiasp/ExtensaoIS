@@ -22,10 +22,18 @@ const localAudiencia = document.querySelector('#localAudiencia')
 
 async function sendMessage(prazo) {
     chrome.tabs.query({}, function(tabs) {
-        chrome.tabs.sendMessage(tabs[1].id, {get: 'local'}, async function(response) {
+        let cont = 0
+        for (let index = 0; index < tabs.length; index++) {
+            
+            if (tabs[index].url.search("https://www.tjse.jus.br/tjnet/portaladv/") == 0) {
+                break
+            }
+            cont++   
+        }
+        chrome.tabs.sendMessage(tabs[cont].id, {get: 'local'}, async function(response) {
             console.log(response.competencia)
             calcularPrazo(prazo,response.competencia)
-            setProcesso(saveInfoProcesso())
+            setAnalise(saveInfoAnalise())
         })
     })
 }
@@ -390,8 +398,8 @@ function copiar() {
 }
 
 async function restore() {
-    let restored = await getProcessoOld()
-    loadInfoProcesso(restored)
+    let restored = await getAnaliseOld()
+    loadInfoAnalise(restored)
 }
 
 function reset () {
@@ -473,7 +481,7 @@ function getExecutor (setor) {
     else {
         if (setor == "CÍVIL") {
             let ala = ["0","1","4","6","8"]
-            if (ala.includes(digito) || intimacao.search("PAUTA") > -1 || intimacao.search("AUDIÊNCIA") == 0)
+            if (ala.includes(digito) && intimacao.search("PAUTA") == -1 && intimacao.search("AUDIÊNCIA") != 0)
                 return "ALÃ"
             return "RODRIGO"
         }
@@ -495,36 +503,54 @@ function getExecutor (setor) {
     }
 }
 
-async function loadInfoProcesso (is) {
+async function loadInfoAnalise (getIS) {
     
-    if (is != null) {
-        if (is.processo != null)
-            processo.value = is.processo
-        if (is.origem != null)
-            origem.value = is.origem
-        if (is.tipoIntimacao != null)
-            tipoIntimacao.value = is.tipoIntimacao
-        if (is.prazoInicial != null)
-            prazoInicial.value = is.prazoInicial
-        if (is.prazoFinal != null)
-            prazoFinal.value = is.prazoFinal
-        if (is.horario != null)
-            horario.value = is.horario
-        if (perito.value != null)
-            perito.value = is.infoPericia.perito
-        if (localPericia.value != null)
-            localPericia.value = is.infoPericia.local
-        if (reu.value != null)
-            reu.value = is.infoAudiencia.reu
-        if (localAudiencia.value != null)
-            localAudiencia.value = is.infoAudiencia.local
-    }
+    if (getIS.data_publicacao != null)
+        dataPub.value = getIS.data_publicacao
+    if (getIS.processo != null)
+        processo.value = getIS.processo
+    if (getIS.origem != null)
+        origem.value = getIS.origem
+    if (getIS.tipoIntimacao != null)
+        tipoIntimacao.value = getIS.tipoIntimacao
+    if (getIS.prazoInicial != null)
+        prazoInicial.value = getIS.prazoInicial
+    if (getIS.prazoFinal != null)
+        prazoFinal.value = getIS.prazoFinal
+    if (getIS.horario != null)
+        horario.value = getIS.horario
+    if (perito.value != null)
+        perito.value = getIS.infoPericia.perito
+    if (localPericia.value != null)
+        localPericia.value = getIS.infoPericia.local
+    if (reu.value != null)
+        reu.value = getIS.infoAudiencia.reu
+    if (localAudiencia.value != null)
+        localAudiencia.value = getIS.infoAudiencia.local
+    
     updateSection(tipoIntimacao.value)
     atualizaFocus()
 }
 
-function saveInfoProcesso () {
+function removeCaracteresProcesso(numeroProcesso) {
+    
+    let processoFormatado = ''
+
+    function isNumber(n) {
+        return !isNaN(parseFloat(n)) && isFinite(n);
+    }
+
+    for (let index = 0; index < numeroProcesso.length; index++) {
+        if (isNumber(numeroProcesso[index]))
+            processoFormatado += numeroProcesso[index]
+    }
+    return processoFormatado
+}
+
+function saveInfoAnalise () {
+
     let is = {
+        data_publicacao: null,
         processo: null,
         origem: null,
         tipoIntimacao: null,
@@ -541,17 +567,13 @@ function saveInfoProcesso () {
         }
     }
 
-    if (processo.value.length > 0){
-        let num = processo.value.replaceAll(".","")
-        num = num.replaceAll("-","")
-        num = num.replaceAll(" ","")
-        is.processo = num
+    if (dataPub.value.length > 0)
+        is.data_publicacao = dataPub.value
+    if (processo.value.length > 0) {
+        is.processo = removeCaracteresProcesso(processo.value)
     }
     if (origem.value.length > 0) {
-        let num_origem = origem.value.replaceAll(".","")
-        num_origem = num_origem.replaceAll("-","")
-        num_origem = num_origem.replaceAll(" ","")
-        is.origem = num_origem
+        is.origem = removeCaracteresProcesso(origem.value)
     }
     if (tipoIntimacao.value.length > 0)
         is.tipoIntimacao = tipoIntimacao.value
@@ -569,6 +591,28 @@ function saveInfoProcesso () {
         is.infoAudiencia.reu = reu.value
     if (localAudiencia.value.length > 0)
         is.infoAudiencia.local = localAudiencia.value
+
+    return is
+}
+
+function resetAnalise() {
+    let is = {
+        data_publicacao: dataPub.value,
+        processo: null,
+        origem: null,
+        tipoIntimacao: null,
+        prazoInicial: null,
+        prazoFinal: null,
+        horario: null,
+        infoAudiencia: {
+            reu: null,
+            local: null
+        },
+        infoPericia: {
+            perito: null,
+            local: null
+        }
+    }
 
     return is
 }
@@ -698,6 +742,7 @@ function addListeners () {
     let indice = -1
     const campo = document.querySelector('.campo')
     const sugestoes = document.querySelector('.sugestoes')
+    const background = document.querySelector('.background')
 
     styleSugestoes()
 
@@ -709,7 +754,7 @@ function addListeners () {
         sugestoes.style.background = 'rgba(255, 255, 255, 0.8)'
     }
     
-    let termos = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PÉRICIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO']
+    let termos = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PÉRICIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO','REMESSA CEJUSC','RECOLHER CUSTAS','AUDIÊNCIA DE INTERROGATÓRIO']
     
     function autocompleteMatch(input) {
         
@@ -754,21 +799,22 @@ function addListeners () {
                 e.style.margin = '0px'
                 e.addEventListener('mouseover', element => {
                     li.forEach (el => {
-                        el.style.background = 'rgba(255, 255, 255, 0.8)'
+                        el.style.background = 'none'
                     })
                     element.target.style.background = '#eee'
                     indice = -1
                 })
                 e.addEventListener('mouseleave', () => {
                     li.forEach (el => {
-                        el.style.background = 'rgba(255, 255, 255, 0.8)'
+                        el.style.background = 'none'
                     })
                     indice = -1
                 })
                 e.addEventListener('click', element => {
                     campo.value = element.target.innerHTML
                     sugestoes.style.display = 'none'
-                    setProcesso(saveInfoProcesso())
+                    background.style.display = 'none'
+                    setAnalise(saveInfoAnalise())
                     updateSection(tipoIntimacao.value)
                 })
             })
@@ -779,6 +825,14 @@ function addListeners () {
     campo.addEventListener('input', e => {
         setTimeout(() => {
             mostrarResultados(e.target)
+            background.style.display = 'block'
+        }, 100);
+    })
+
+    campo.addEventListener('focus', e => {
+        setTimeout(() => {
+            mostrarResultados(e.target)
+            background.style.display = 'block'
         }, 100);
     })
 
@@ -790,7 +844,7 @@ function addListeners () {
                 if (indice > 0) {
                     --indice
                     elements.forEach(e => {
-                        e.style.background = 'rgba(255, 255, 255, 0.8)'
+                        e.style.background = 'none'
                     })
                     elements[indice].style.background = '#eee'
                 }
@@ -799,7 +853,7 @@ function addListeners () {
                 if (indice < elements.length-1) {
                     ++indice
                     elements.forEach(e => {
-                        e.style.background = 'rgba(255, 255, 255, 0.8)'
+                        e.style.background = 'none'
                     })
                     elements[indice].style.background = '#eee'
                 }
@@ -819,7 +873,7 @@ function addListeners () {
             }
             if (event.target == prazoFinal)
                 prazoInicial.value = prazoFinal.value
-            setProcesso(saveInfoProcesso())
+            setAnalise(saveInfoAnalise())
         })
     })
     btnSetor.forEach(element => {
@@ -827,8 +881,8 @@ function addListeners () {
             let setor = event.target.value
             let executor = getExecutor(setor)
             gerarTxt(executor)
-            setProcessoOld(saveInfoProcesso())
-            setProcesso(null)
+            setAnaliseOld(saveInfoAnalise())
+            setAnalise(resetAnalise())
         })
     })
     btnPrazo.forEach(element => {
@@ -844,15 +898,17 @@ function addListeners () {
     restoreBtn.addEventListener("click",() => {
         restore()
     })
-    dataPub.addEventListener('change',event => {
-        let data_publicacao = event.target.value
-        setDataPub(data_publicacao)
+    dataPub.addEventListener('change', () => {
+        setAnalise(saveInfoAnalise())
+    })
+    background.addEventListener('click', e => {
+        e.target.style.display = 'none'
+        sugestoes.style.display = 'none'
     })
 }
 
 (async function () {
     addListeners()
-    loadInfoProcesso(await getProcesso())
-    dataPub.value = await getDataPub()
+    loadInfoAnalise(await getAnalise())
 }) ()
 

@@ -126,10 +126,7 @@ input[type=number] {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-}
-
-#processoCampos div {
-    margin: 0px 5px;
+    column-gap: 5px;
 }
 
 .oculto {
@@ -155,4 +152,20 @@ input[type=number] {
 .btn-ok {
     width: 270px;
     margin: 5px 0 0 0;
+}
+
+.sugestoes {
+    display: none;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 2;
+}
+
+.background {
+    display: none;
+    position: absolute;
+    z-index: 1;
+    width: 340px;
+    height: 589.92px;
+    left: 0;
+    top: 0;
 }
