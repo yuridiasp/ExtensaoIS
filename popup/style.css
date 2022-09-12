@@ -159,13 +159,3 @@ input[type=number] {
     background: rgba(255, 255, 255, 0.8);
     z-index: 2;
 }
-
-.background {
-    display: none;
-    position: absolute;
-    z-index: 1;
-    width: 340px;
-    height: 589.92px;
-    left: 0;
-    top: 0;
-}

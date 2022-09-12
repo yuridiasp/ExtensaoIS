@@ -742,7 +742,6 @@ function addListeners () {
     let indice = -1
     const campo = document.querySelector('.campo')
     const sugestoes = document.querySelector('.sugestoes')
-    const background = document.querySelector('.background')
 
     styleSugestoes()
 
@@ -813,7 +812,6 @@ function addListeners () {
                 e.addEventListener('click', element => {
                     campo.value = element.target.innerHTML
                     sugestoes.style.display = 'none'
-                    background.style.display = 'none'
                     setAnalise(saveInfoAnalise())
                     updateSection(tipoIntimacao.value)
                 })
@@ -825,15 +823,19 @@ function addListeners () {
     campo.addEventListener('input', e => {
         setTimeout(() => {
             mostrarResultados(e.target)
-            background.style.display = 'block'
         }, 100);
     })
 
     campo.addEventListener('focus', e => {
         setTimeout(() => {
             mostrarResultados(e.target)
-            background.style.display = 'block'
         }, 100);
+    })
+
+    campo.addEventListener('blur', e => {
+        setTimeout(() => {
+            sugestoes.style.display = 'none'
+        }, 200);
     })
 
     document.addEventListener('keydown', e => {
@@ -900,10 +902,6 @@ function addListeners () {
     })
     dataPub.addEventListener('change', () => {
         setAnalise(saveInfoAnalise())
-    })
-    background.addEventListener('click', e => {
-        e.target.style.display = 'none'
-        sugestoes.style.display = 'none'
     })
 }
 
