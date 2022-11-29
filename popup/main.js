@@ -85,8 +85,52 @@ function calculaPascoa(ano) {
 
 function FeriadosFixos (ano,competencia) {
     let aux = competencia.normalize('NFD').replace(/[\u0300-\u036f]/g, "")
+    const tarefaContatar = (parametro == 1)
+    const tarefaAdvogado = (parametro == 2)
+    const indexDia = 1
+    const indexMes = 0
+    const indexJaneiro = 0
+
+    function setIntervaloFeriadosJudiciario(diaInicio, mesInicio, diaFinal, mesFinal) {
+        let feriados = []
+        let condicao = true
+        let dia = diaInicio
+        let mes = mesInicio
+        const fimMesDezembro = 31
+        const diaPrimeiro = 1
+
+        while(condicao) {
+            feriados.push([mes, dia])
+            dia++
+            if (dia > fimMesDezembro) {
+                dia = diaPrimeiro
+                mes = indexJaneiro
+            }
+            if ((dia > diaFinal) && (mes == mesFinal)) {
+                condicao = false
+            }
+        }
+
+        return feriados
+    }
+
     let resultados = []
-    let datas = {
+
+    const diaInicioForense = 20
+    const mesInicioForense = 11
+    const diaFimForense = 6
+    const mesFimForense = 0
+
+    const forense = setIntervaloFeriadosJudiciario(diaInicioForense, mesInicioForense, diaFimForense, mesFimForense)
+
+    const diaInicioFeriasAdvogados = 20
+    const mesInicioFeriasAdvogados = 11
+    const diaFimFeriasAdvogados = 20
+    const mesFimFeriasAdvogados = 0
+
+    const advogados = setIntervaloFeriadosJudiciario(diaInicioFeriasAdvogados, mesInicioFeriasAdvogados, diaFimFeriasAdvogados, mesFimFeriasAdvogados)
+
+    let datas = { // [mes, dia] (indice do mes de 0 a 11)
         nacional: [
             [0,1], //CONFRATERNIZAÇÃO UNIVERSAL
             [3,21], //TIRADENTES
@@ -97,15 +141,23 @@ function FeriadosFixos (ano,competencia) {
             [10,15], //PROCLAMAÇÃO DA REPÚBLICA
             [11,25], //NATAL
         ],
+        recesso_forense : forense, //Recesso Forense 20/12 a 06/01
+        ferias_advogados: advogados, //Recesso dos advogados 20/12 a 20/01 Art. 220 NCPC
         justica_nacional: [
             [7,11], //DIA DO MAGISTRADO
-            [9,28], //DIA DO FUNCIONÁRIO PÚBLICO
+            [9,31], //DIA DO FUNCIONÁRIO PÚBLICO
             [10,1], //LEI FEDERAL Nº 5.010/66
             [11,8] //DIA DA JUSTIÇA
         ],
+        TRF1: [
+            [10,24], //Copa do mundo - Jogo do Brasil
+            [10,28], //Copa do mundo - Jogo do Brasil
+            [11,2] //Copa do mundo - Jogo do Brasil
+        ],
         'SE': [
             [5,24], //SÃO JOÃO
-            [6,8] //EMANCIPAÇÃO POLÍTICA DE SERGIPE
+            [6,8], //EMANCIPAÇÃO POLÍTICA DE SERGIPE
+            [10,28] //JOGO DA COPA - PORTARIA GP1 72/2022 TJSE
         ],
         'AQUIDABA': [
             [3,4], //EMANCIPAÇÃO POLÍTICA
@@ -216,9 +268,9 @@ function FeriadosFixos (ano,competencia) {
             [10,25] //EMANCIPAÇÃO POLÍTICA
         ],
         'MARUIM': [
-                    [0,21], //PADROEIRO
-                    [4,5], //EMANCIPAÇÃO POLÍTICA
-                    [7,15] //CO-PADROEIRA NOSSA SENHORA DA PAZ
+            [0,21], //PADROEIRO
+            [4,5], //EMANCIPAÇÃO POLÍTICA
+            [7,15] //CO-PADROEIRA NOSSA SENHORA DA PAZ
         ],
         'MONTE ALEGRE DE SERGIPE': [
             [5,24], //PADROEIRO
@@ -287,17 +339,17 @@ function FeriadosFixos (ano,competencia) {
             [11,18] //EMANCIPAÇÃO POLÍTICA
         ],
         'SALGADO': [
-                    [0,22], //PADROEIRO
-                    [9,4] //EMANCIPAÇÃO POLÍTICA
+            [0,22], //PADROEIRO
+            [9,4] //EMANCIPAÇÃO POLÍTICA
         ],
         'SANTANA DO SAO FRANCISCO': [
             [3,6], //EMANCIPAÇÃO POLÍTICA
             [6,26] //PADROEIRA
         ],
         'SANTO AMARO DAS BROTAS': [
-                        [0,15], //PADROEIRA
-                        [11,15] //EMANCIPAÇÃO POLÍTICA
-                    ],
+            [0,15], //PADROEIRA
+            [11,15] //EMANCIPAÇÃO POLÍTICA
+        ],
         'SAO CRISTOVAO': [
             [8,8] //PADROEIRA
         ],
@@ -319,26 +371,50 @@ function FeriadosFixos (ano,competencia) {
             [1,6] //EMANCIPAÇÃO POLÍTICA
         ]
     }
-    datas.nacional.forEach(e => {
-        resultados.push(new Date(ano,e[0],e[1]))
-    })
 
-    datas.justica_nacional.forEach(e => {
-        resultados.push(new Date(ano,e[0],e[1]))
-    })
-    datas.SE.forEach(e => {
-        resultados.push(new Date(ano,e[0],e[1]))
-    })
-        
-    let date = Object.entries(datas)
-    for (const [key,value] of date) {
-        if (aux.toUpperCase().search(key) > -1){
-            console.log(key,value)
-            value.forEach(e => {
-                resultados.push(new Date(ano,e[0],e[1]))
+
+    if (tarefaContatar) {
+        datas.SE.forEach(feriado => {
+            resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
+        })
+        datas.ARACAJU.forEach(feriado => {
+            resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
+        })
+    }
+
+    if (tarefaAdvogado) {
+        datas.justica_nacional.forEach(feriado => {
+            resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
+        })
+
+        if (cliente.processo.estado == 'SE') {
+            datas.SE.forEach(e => {
+                resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
             })
         }
+
+        if (cliente.processo.estado == 'DF' || cliente.processo.estado == 'GO') {
+            datas.TRF1.forEach(feriado => {
+                resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
+            })
+        }
+        
+        let date = Object.entries(datas)
+        for (const [key,value] of date) {
+            if (aux.toUpperCase().search(key) > -1){
+                value.forEach(e => {
+                    resultados.push(new Date(ano,e[0],e[1]))
+                })
+            }
+        }
     }
+
+    datas.recesso_forense.forEach(feriado => {
+        if (feriado[indexMes] == indexJaneiro)
+            resultados.push(new Date(ano+1, feriado[indexMes], feriado[indexDia]))
+        else
+            resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
+    })
     return resultados
 }
 
@@ -658,8 +734,7 @@ function calcularPrazo (prazo,competencia) {
     if (tipoIntimacao.value.toUpperCase() == "SENTENÇA" || tipoIntimacao.value.toUpperCase() == "DECISÃO" || tipoIntimacao.value.toUpperCase() == "ACÓRDÃO") {
         if (dias_fat > 1)
             dias_int = 3
-    }
-    else {
+    } else {
         if (dias_fat != 5 && dias_fat > 5)
             dias_int = dias_fat-3
         if (dias_fat == 5)
@@ -753,7 +828,7 @@ function addListeners () {
         sugestoes.style.background = 'rgba(255, 255, 255, 0.8)'
     }
     
-    let termos = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PÉRICIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO','REMESSA CEJUSC','RECOLHER CUSTAS','AUDIÊNCIA DE INTERROGATÓRIO']
+    let termos = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PÉRICIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO','REMESSA CEJUSC','RECOLHER CUSTAS','AUDIÊNCIA DE INTERROGATÓRIO','MANIFESTAÇÃO SOBRE CERTIDÃO', 'MANIFESTAÇÃO SOBRE OFÍCIO', 'ANÁLISE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CONCILIAÇÃO + PROVAS','MANIFESTAÇÃO SOBRE RENAJUD', 'MANIFESTAÇÃO SOBRE PERITO + INDICAR TÉCNICOS + QUESITOS']
     
     function autocompleteMatch(input) {
         
@@ -904,6 +979,7 @@ function addListeners () {
         setAnalise(saveInfoAnalise())
     })
 }
+
 
 (async function () {
     addListeners()
