@@ -20,7 +20,7 @@ const localPericia = document.querySelector('#localPericia')
 const reu = document.querySelector('#reu')
 const localAudiencia = document.querySelector('#localAudiencia')
 
-async function sendMessage(prazo) {
+async function sendMessage(prazo, parametro) {
     chrome.tabs.query({}, function(tabs) {
         let cont = 0
         for (let index = 0; index < tabs.length; index++) {
@@ -32,14 +32,14 @@ async function sendMessage(prazo) {
         }
         chrome.tabs.sendMessage(tabs[cont].id, {get: 'local'}, async function(response) {
             console.log(response.competencia)
-            calcularPrazo(prazo,response.competencia)
+            calcularPrazo(prazo,response.competencia, parametro)
             setAnalise(saveInfoAnalise())
         })
     })
 }
 
-function getLocalProcesso(prazo) {
-    return sendMessage(prazo)
+function getLocalProcesso(prazo, parametro) {
+    return sendMessage(prazo, parametro)
 }
 
 function calculaPascoa(ano) {
@@ -83,7 +83,7 @@ function calculaPascoa(ano) {
     return new Date(ano,MES,DIA)
 }
 
-function FeriadosFixos (ano,competencia) {
+function FeriadosFixos (ano, competencia, parametro,) {
     let aux = competencia.normalize('NFD').replace(/[\u0300-\u036f]/g, "")
     const tarefaContatar = (parametro == 1)
     const tarefaAdvogado = (parametro == 2)
@@ -372,11 +372,11 @@ function FeriadosFixos (ano,competencia) {
         ]
     }
 
+    datas.SE.forEach(feriado => {
+        resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
+    })
 
     if (tarefaContatar) {
-        datas.SE.forEach(feriado => {
-            resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
-        })
         datas.ARACAJU.forEach(feriado => {
             resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
         })
@@ -387,23 +387,18 @@ function FeriadosFixos (ano,competencia) {
             resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
         })
 
-        if (cliente.processo.estado == 'SE') {
-            datas.SE.forEach(e => {
+        datas.ferias_advogados.forEach(feriado => {
+            if (feriado[indexMes] == indexJaneiro)
+                resultados.push(new Date(ano+1, feriado[indexMes], feriado[indexDia]))
+            else
                 resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
-            })
-        }
-
-        if (cliente.processo.estado == 'DF' || cliente.processo.estado == 'GO') {
-            datas.TRF1.forEach(feriado => {
-                resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
-            })
-        }
+        })
         
         let date = Object.entries(datas)
         for (const [key,value] of date) {
             if (aux.toUpperCase().search(key) > -1){
-                value.forEach(e => {
-                    resultados.push(new Date(ano,e[0],e[1]))
+                value.forEach(feriado => {
+                    resultados.push(new Date(ano,feriado[indexMes],feriado[indexDia]))
                 })
             }
         }
@@ -418,21 +413,10 @@ function FeriadosFixos (ano,competencia) {
     return resultados
 }
 
-function getFeriadosForenses (ano) {
-    let date_inicial = new Date(ano,11,20)
-    let date_final = new Date(ano+1,0,6)
-    let feriados = []
-    while(date_inicial != date_final) {
-        feriados.push(date_inicial)
-        date_inicial.setDate(date_inicial.getDate()+1)
-    }
-    return feriados
-}
-
-function calculaFeriados(competencia) {
+function calculaFeriados(competencia, parametro) {
     let date = new Date()
     let ano = date.getFullYear()
-    let fixos = FeriadosFixos(ano,competencia)
+    let fixos = FeriadosFixos(ano,competencia, parametro)
     let pascoa = calculaPascoa(ano)
     let date_1 = new Date(pascoa.valueOf())
     let date_2 = new Date(pascoa.valueOf())
@@ -446,7 +430,6 @@ function calculaFeriados(competencia) {
     let segunda_carnaval = new Date (date_4.setDate(pascoa.getDate()-48))
     let terca_carnaval = new Date (date_5.setDate(pascoa.getDate()-47))
     let corpus = new Date (date_6.setDate(pascoa.getDate()+60))
-    //let forenses = getFeriadosForenses(ano)
     let variaveis = [segunda_carnaval,terca_carnaval,quarta_santa,quinta_santa,paixao,pascoa,corpus]
     let feriados = []
 
@@ -456,9 +439,6 @@ function calculaFeriados(competencia) {
     variaveis.forEach(e => {
         feriados.push(e)
     })
-    /* forenses.forEach(e => {
-        feriados.push(e)
-    }) */
     return feriados
 }
 
@@ -547,36 +527,33 @@ function getExecutor (setor) {
         digito_indice = processo.value.length-1
         digito = processo.value[digito_indice]
     }
-    
-    if (setor == "BANCÁRIO"){
-        let lais = ["1","4","5","8","9"]
-        if (lais.includes(digito) || intimacao.search("PAUTA") > -1 || intimacao.search("AUDIÊNCIA") == 0)
-            return "LAIS"
-        return "ANTONIO"
-    }
-    else {
-        if (setor == "CÍVIL") {
-            let ala = ["0","1","4","6","8"]
-            if (ala.includes(digito) && intimacao.search("PAUTA") == -1 && intimacao.search("AUDIÊNCIA") != 0)
-                return "ALÃ"
+
+    if (setor == "BANCÁRIO") {
+        const rodrigo = ['5']
+        const gabriel = ['1','4','9']
+        if (rodrigo.includes(digito) || intimacao.search("PAUTA") > -1 || intimacao.search("AUDIÊNCIA") == 0){
             return "RODRIGO"
         }
-        else
-            if (setor == "PREVIDENCIÁRIO"){
-                return "KEVEN"
-            }
-            else
-                if (setor == "ADM") {
-                    return "(ADM)"
-                }
-                else
-                    if (setor == "FINANCEIRO")
-                        return "(FINANCEIRO)"
-                    else
-                        if (setor == "TRABALHISTA")
-                            return "VICTOR"
-        return "OK"
+        if (gabriel.includes(digito)) {
+            return "GABRIEL"
+        }
+        return "ANTONIO"
     }
+    if (setor == "CÍVIL") {
+        let ala = ["0","1","4","6","8"]
+        if (ala.includes(digito) && intimacao.search("PAUTA") == -1 && intimacao.search("AUDIÊNCIA") != 0)
+            return "ALÃ"
+        return "RODRIGO"
+    }
+    if (setor == "PREVIDENCIÁRIO")
+        return "KEVEN"
+    if (setor == "ADM")
+        return "(ADM)"
+    if (setor == "FINANCEIRO")
+        return "(FINANCEIRO)"
+    if (setor == "TRABALHISTA")
+        return "VICTOR"
+    return "OK"
 }
 
 async function loadInfoAnalise (getIS) {
@@ -693,9 +670,9 @@ function resetAnalise() {
     return is
 }
 
-function isFeriado (date,competencia) {
+function isFeriado (date,competencia, parametro) {
     let feriado = false
-    let feriados = calculaFeriados(competencia)
+    let feriados = calculaFeriados(competencia, parametro)
 
     feriados.forEach(e => {
         if (e.toDateString() == date.toDateString())
@@ -704,15 +681,16 @@ function isFeriado (date,competencia) {
     return feriado
 }
 
-function calcularPrazo (prazo,competencia) {
+function calcularPrazo (prazo, competencia, parametro) {
     let date_final = new Date()
     let date_inicial = new Date()
     let dias_int = Number(prazo)
     let dias_fat = Number(prazo)
     let cont = 1
     let i
+    const tarefaAdvogado = (parametro == 2)
 
-    if (dataPub.value.length > 0) {
+    if ((dataPub.value.length > 0) && tarefaAdvogado) {
         let data = dataPub.value.split('-')
         date_final = new Date(data[0],Number(data[1])-1,Number(data[2]))
         date_inicial = new Date(data[0],Number(data[1])-1,Number(data[2]))
@@ -722,7 +700,7 @@ function calcularPrazo (prazo,competencia) {
         date_final.setDate(date_final.getDate() + 1)
         i = date_final.getDay()
 
-        if (i > 0 && i < 6 && !isFeriado(date_final,competencia)) {
+        if (i > 0 && i < 6 && !isFeriado(date_final,competencia, parametro)) {
             cont = cont + 1
         }
     }
@@ -749,12 +727,12 @@ function calcularPrazo (prazo,competencia) {
         i = date_inicial.getDay()
         
         if (dias_int >= cont) {
-            if (i > 0 && i < 6 && !isFeriado(date_inicial,competencia)) {
+            if (i > 0 && i < 6 && !isFeriado(date_inicial,competencia, parametro)) {
                 cont = cont + 1
             }
         }
         else {
-            if (isFeriado(date_inicial,competencia) && i > 0 && i < 6) {
+            if (isFeriado(date_inicial,competencia, parametro) && i > 0 && i < 6) {
                     date_inicial.setDate(date_inicial.getDate() - 1)
                     cont = cont + 1
             }
@@ -964,8 +942,16 @@ function addListeners () {
     })
     btnPrazo.forEach(element => {
         element.addEventListener("click", event => {
-            let prazo = event.target.value
-            getLocalProcesso(prazo)
+            const { value } = event.target
+            let prazo = value
+            let parametro = 2
+            
+            if (value == "Contatar Cliente") {
+                prazo = 1
+                parametro = 1
+            }
+
+            getLocalProcesso(prazo, parametro)
         })
     })
     resetBtn.addEventListener("click",() => {
