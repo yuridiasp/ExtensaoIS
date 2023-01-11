@@ -388,10 +388,14 @@ function FeriadosFixos (ano, competencia, parametro,) {
         })
 
         datas.ferias_advogados.forEach(feriado => {
-            if (feriado[indexMes] == indexJaneiro)
+            if (feriado[indexMes] == indexJaneiro) {
                 resultados.push(new Date(ano+1, feriado[indexMes], feriado[indexDia]))
-            else
                 resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
+            }
+            else {
+                resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
+                resultados.push(new Date(ano-1, feriado[indexMes], feriado[indexDia]))
+            }
         })
         
         let date = Object.entries(datas)
@@ -405,11 +409,18 @@ function FeriadosFixos (ano, competencia, parametro,) {
     }
 
     datas.recesso_forense.forEach(feriado => {
-        if (feriado[indexMes] == indexJaneiro)
+        if (feriado[indexMes] == indexJaneiro) {
             resultados.push(new Date(ano+1, feriado[indexMes], feriado[indexDia]))
-        else
             resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
+        }
+        else {
+            resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
+            resultados.push(new Date(ano-1, feriado[indexMes], feriado[indexDia]))
+        }
     })
+
+    console.log(resultados)
+
     return resultados
 }
 
