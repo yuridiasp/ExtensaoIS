@@ -15,7 +15,8 @@
     "content_scripts": [
       {
           "matches": [
-              "https://www.tjse.jus.br/tjnet/portaladv/*"
+              "https://www.tjse.jus.br/tjnet/portaladv/*",
+              "https://pje.trt20.jus.br/*"
           ],
           "js": [
               "chromeUtils.js",

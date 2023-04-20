@@ -19,19 +19,33 @@ const perito = document.querySelector('#perito')
 const localPericia = document.querySelector('#localPericia')
 const reu = document.querySelector('#reu')
 const localAudiencia = document.querySelector('#localAudiencia')
+let portal = null
+
+processo.addEventListener('input', event => {
+    event.target.value = removeCaracteresProcesso(event.target.value)
+})
+
+origem.addEventListener('input', event => {
+    event.target.value = removeCaracteresProcesso(event.target.value)
+})
+
+function removeCaracteresProcesso(value) {
+    return value.replace(/[^\d]/g, '')
+}
 
 async function sendMessage(prazo, parametro) {
     chrome.tabs.query({}, function(tabs) {
         let cont = 0
         for (let index = 0; index < tabs.length; index++) {
             
-            if (tabs[index].url.search("https://www.tjse.jus.br/tjnet/portaladv/") == 0) {
+            if (tabs[index].url.search("https://www.tjse.jus.br/tjnet/portaladv/") == 0 || tabs[index].url.search("https://pje.trt20.jus.br/pjekz/processo/") == 0) {
                 break
             }
+            
             cont++   
         }
         chrome.tabs.sendMessage(tabs[cont].id, {get: 'local'}, async function(response) {
-            console.log(response.competencia)
+            portal = response.portal
             calcularPrazo(prazo,response.competencia, parametro)
             setAnalise(saveInfoAnalise())
         })
@@ -84,7 +98,7 @@ function calculaPascoa(ano) {
 }
 
 function FeriadosFixos (ano, competencia, parametro,) {
-    let aux = competencia.normalize('NFD').replace(/[\u0300-\u036f]/g, "")
+    let aux = competencia ? competencia.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase() : null
     const tarefaContatar = (parametro == 1)
     const tarefaAdvogado = (parametro == 2)
     const indexDia = 1
@@ -372,6 +386,10 @@ function FeriadosFixos (ano, competencia, parametro,) {
         ]
     }
 
+    datas.nacional.forEach(feriado => {
+        resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
+    })
+
     datas.SE.forEach(feriado => {
         resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
     })
@@ -399,11 +417,14 @@ function FeriadosFixos (ano, competencia, parametro,) {
         })
         
         let date = Object.entries(datas)
-        for (const [key,value] of date) {
-            if (aux.toUpperCase().search(key) > -1){
-                value.forEach(feriado => {
-                    resultados.push(new Date(ano,feriado[indexMes],feriado[indexDia]))
-                })
+
+        if (aux) {
+            for (const [key,value] of date) {
+                    if (aux.search(key) > -1){
+                        value.forEach(feriado => {
+                            resultados.push(new Date(ano,feriado[indexMes],feriado[indexDia]))
+                        })
+                    }
             }
         }
     }
@@ -419,8 +440,6 @@ function FeriadosFixos (ano, competencia, parametro,) {
         }
     })
 
-    console.log(resultados)
-
     return resultados
 }
 
@@ -435,13 +454,15 @@ function calculaFeriados(competencia, parametro) {
     let date_4 = new Date(pascoa.valueOf())
     let date_5 = new Date(pascoa.valueOf())
     let date_6 = new Date(pascoa.valueOf())
+    let date_7 = new Date(pascoa.valueOf())
     let quarta_santa = new Date (date_1.setDate(pascoa.getDate()-4))
     let quinta_santa = new Date (date_2.setDate(pascoa.getDate()-3))
     let paixao = new Date (date_3.setDate(pascoa.getDate()-2))
     let segunda_carnaval = new Date (date_4.setDate(pascoa.getDate()-48))
     let terca_carnaval = new Date (date_5.setDate(pascoa.getDate()-47))
-    let corpus = new Date (date_6.setDate(pascoa.getDate()+60))
-    let variaveis = [segunda_carnaval,terca_carnaval,quarta_santa,quinta_santa,paixao,pascoa,corpus]
+    let quarta_cinzas = new Date (date_6.setDate(pascoa.getDate()-46))
+    let corpus = new Date (date_7.setDate(pascoa.getDate()+60))
+    let variaveis = [segunda_carnaval,terca_carnaval,quarta_cinzas,quarta_santa,quinta_santa,paixao,pascoa,corpus]
     let feriados = []
 
     fixos.forEach(e => {
@@ -548,7 +569,7 @@ function getExecutor (setor) {
         if (gabriel.includes(digito)) {
             return "GABRIEL"
         }
-        return "ANTONIO"
+        return "LAIS"
     }
     if (setor == "CÍVIL") {
         let ala = ["0","1","4","6","8"]
@@ -563,7 +584,7 @@ function getExecutor (setor) {
     if (setor == "FINANCEIRO")
         return "(FINANCEIRO)"
     if (setor == "TRABALHISTA")
-        return "VICTOR"
+        return "FELIPE"
     return "OK"
 }
 
@@ -594,21 +615,6 @@ async function loadInfoAnalise (getIS) {
     
     updateSection(tipoIntimacao.value)
     atualizaFocus()
-}
-
-function removeCaracteresProcesso(numeroProcesso) {
-    
-    let processoFormatado = ''
-
-    function isNumber(n) {
-        return !isNaN(parseFloat(n)) && isFinite(n);
-    }
-
-    for (let index = 0; index < numeroProcesso.length; index++) {
-        if (isNumber(numeroProcesso[index]))
-            processoFormatado += numeroProcesso[index]
-    }
-    return processoFormatado
 }
 
 function saveInfoAnalise () {
@@ -684,10 +690,12 @@ function resetAnalise() {
 function isFeriado (date,competencia, parametro) {
     let feriado = false
     let feriados = calculaFeriados(competencia, parametro)
+    console.log(feriados)
 
     feriados.forEach(e => {
-        if (e.toDateString() == date.toDateString())
+        if (e.toDateString() == date.toDateString()) {
             feriado = true
+        }
     })
     return feriado
 }
@@ -722,12 +730,12 @@ function calcularPrazo (prazo, competencia, parametro) {
 
     if (tipoIntimacao.value.toUpperCase() == "SENTENÇA" || tipoIntimacao.value.toUpperCase() == "DECISÃO" || tipoIntimacao.value.toUpperCase() == "ACÓRDÃO") {
         if (dias_fat > 1)
-            dias_int = 3
+            dias_int = (portal == 'TJ' ? 3 : 2)
     } else {
         if (dias_fat != 5 && dias_fat > 5)
             dias_int = dias_fat-3
         if (dias_fat == 5)
-            dias_int = 3
+            dias_int = (portal == 'TJ' ? 3 : 2)
 
     }
 
@@ -817,7 +825,7 @@ function addListeners () {
         sugestoes.style.background = 'rgba(255, 255, 255, 0.8)'
     }
     
-    let termos = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PÉRICIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO','REMESSA CEJUSC','RECOLHER CUSTAS','AUDIÊNCIA DE INTERROGATÓRIO','MANIFESTAÇÃO SOBRE CERTIDÃO', 'MANIFESTAÇÃO SOBRE OFÍCIO', 'ANÁLISE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CONCILIAÇÃO + PROVAS','MANIFESTAÇÃO SOBRE RENAJUD', 'MANIFESTAÇÃO SOBRE PERITO + INDICAR TÉCNICOS + QUESITOS']
+    let termos = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PÉRICIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO','REMESSA CEJUSC','RECOLHER CUSTAS','AUDIÊNCIA DE INTERROGATÓRIO','MANIFESTAÇÃO SOBRE CERTIDÃO', 'MANIFESTAÇÃO SOBRE OFÍCIO', 'ANÁLISE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CONCILIAÇÃO + PROVAS','MANIFESTAÇÃO SOBRE RENAJUD', 'MANIFESTAÇÃO SOBRE PERITO + INDICAR TÉCNICOS + QUESITOS', 'CONTRAMINUTA', 'ANÁLISE DE SENTENÇA', 'RECURSO DE REVISTA', 'RECURSO ORDINÁRIO', 'AGRAVO INTERNO', 'EMBARGOS À EXECUÇÃO', 'AGRAVO DE PETIÇÃO', 'RESPOSTA À EXCEÇÃO DE INCOMPETÊNCIA', 'MANIFESTAÇÃO SOBRE EMBARGOS', 'AGRAVO DE INSTRUMENTO', 'ANÁLISE DE ACÓRDÃO', 'ANÁLISE DE DESPACHO', 'INDICAR ENDEREÇO']
     
     function autocompleteMatch(input) {
         
@@ -904,7 +912,6 @@ function addListeners () {
 
     document.addEventListener('keydown', e => {
         let elements = document.querySelectorAll('#processoCampos > div:nth-child(1) > div:nth-child(2) > div.sugestoes > ul > li')
-        console.log(e.key)
         if (sugestoes.style.display != "none") {
             if (e.key == "ArrowUp") {
                 if (indice > 0) {
