@@ -22,12 +22,77 @@ const localAudiencia = document.querySelector('#localAudiencia')
 let portal = null
 
 processo.addEventListener('input', event => {
+    const icon = document.querySelector('#iconCheckVerify')
     event.target.value = removeCaracteresProcesso(event.target.value)
+    if (event.target.value.length > 0) {
+        event.target.setAttribute("readOnly",true)
+        setTimeout(() => {
+            sendMessageCheck(event, icon)
+        }, 10)
+    }
 })
 
 origem.addEventListener('input', event => {
+    const iconOrigem = document.querySelector('#iconCheckVerifyOrigem')
     event.target.value = removeCaracteresProcesso(event.target.value)
+    if (event.target.value.length > 0) {
+        event.target.setAttribute("readOnly",true)
+        setTimeout(() => {
+            sendMessageCheck(event, iconOrigem)
+        }, 10)
+    }
 })
+
+function sendMessageCheck(event, icon) {
+    if (event.target.value.length > 0 || (!icon.classList.contains('iconCheck'))) {
+        icon.classList.remove('fa-check-circle')
+        icon.classList.remove('fa-times-circle')
+        icon.classList.remove('iconSucessValidate')
+        icon.classList.remove('iconErroValidate')
+        icon.classList.add('fa-refresh')
+        icon.classList.add('iconCheck')
+    }
+
+    chrome.tabs.query({}, function(tabs) {
+
+        let cont = 0
+
+        for (let index = 0; index < tabs.length; index++) {
+            
+            if (tabs[index].url.search("http://fabioribeiro.eastus.cloudapp.azure.com/") == 0) {
+                break
+            }
+            
+            cont++   
+        }
+        
+        let port = chrome.tabs.connect(tabs[cont].id,{name: 'check'})
+        
+        port.postMessage(event.target.value)
+    
+        port.onMessage.addListener(function(msg) {
+            
+            atualizarIconCheck(msg.checked, icon, event.target)
+        })
+
+    })
+}
+
+function atualizarIconCheck (result, icon, target) {
+
+    if (result) {
+        icon.classList.remove('iconCheck')
+        icon.classList.remove('fa-refresh')
+        icon.classList.add('fa-check-circle')
+        icon.classList.add('iconSucessValidate')
+    } else {
+        icon.classList.remove('iconCheck')
+        icon.classList.remove('fa-refresh')
+        icon.classList.add('fa-times-circle')
+        icon.classList.add('iconErroValidate')
+    }
+    target.removeAttribute("readOnly")
+}
 
 function removeCaracteresProcesso(value) {
     return value.replace(/[^\d]/g, '')
@@ -159,19 +224,14 @@ function FeriadosFixos (ano, competencia, parametro,) {
         ferias_advogados: advogados, //Recesso dos advogados 20/12 a 20/01 Art. 220 NCPC
         justica_nacional: [
             [7,11], //DIA DO MAGISTRADO
-            [9,31], //DIA DO FUNCIONÁRIO PÚBLICO
+            [9,28], //DIA DO FUNCIONÁRIO PÚBLICO
             [10,1], //LEI FEDERAL Nº 5.010/66
-            [11,8] //DIA DA JUSTIÇA
+            [11,8], //DIA DA JUSTIÇA
         ],
-        TRF1: [
-            [10,24], //Copa do mundo - Jogo do Brasil
-            [10,28], //Copa do mundo - Jogo do Brasil
-            [11,2] //Copa do mundo - Jogo do Brasil
-        ],
+        TRF1: [],
         'SE': [
             [5,24], //SÃO JOÃO
             [6,8], //EMANCIPAÇÃO POLÍTICA DE SERGIPE
-            [10,28] //JOGO DA COPA - PORTARIA GP1 72/2022 TJSE
         ],
         'AQUIDABA': [
             [3,4], //EMANCIPAÇÃO POLÍTICA
@@ -474,15 +534,27 @@ function calculaFeriados(competencia, parametro) {
     return feriados
 }
 
-function copiar() {
+async function copiar() {
 
-    navigator.clipboard.writeText(genTXT.value)
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+
+        chrome.tabs.sendMessage(tabs[0].id, {texto: genTXT.innerHTML}, async function(response) {
+            if (!chrome.runtime.lastError) {
+                console.log("Copiado! Mensagem: " + response.resposta)
+            } else {
+                console.log("Houve um erro: " + chrome.runtime.lastError.message)
+            }
+        })
+    })
+  
+
+    /* navigator.clipboard.writeText(genTXT.innerHTML)
         .then(() => {
         console.log("Text copied to clipboard...")
     })
         .catch(err => {
         console.log('Something went wrong', err);
-    })
+    }) */
 }
 
 async function restore() {
@@ -497,7 +569,7 @@ function reset () {
     })
 }
 
-function gerarTxt (executor) {
+async function gerarTxt (executor) {
     let init = `${prazoInicial.value.slice(8,10)}/${prazoInicial.value.slice(5,7)}`
     let final = `${prazoFinal.value.slice(8,10)}/${prazoFinal.value.slice(5,7)}`
     let data
@@ -511,39 +583,31 @@ function gerarTxt (executor) {
         data = `(${init} - ${final})`
     if ((localPericia.value.length > 0 || perito.value.length > 0) && executor !== "OK") {
         if (origem.value.length > 0 && executor !== "OK")
-genTXT.value = `${processo.value} (ORIGEM ${origem.value}) - ${tipoIntimacao.value} - ${data} - ${executor}
-PERITO: ${perito.value}
-LOCAL: ${localPericia.value}`.toUpperCase()
-        else 
+            genTXT.innerHTML = `<strong>${processo.value} (ORIGEM ${origem.value}) - ${tipoIntimacao.value} - ${data} - ${executor}</strong><br>PERITO: ${perito.value}<br>LOCAL: ${localPericia.value}`
+        else
             if (executor !== "OK")
-genTXT.value = `${processo.value} - ${tipoIntimacao.value} - ${data} - ${executor}
-PERITO: ${perito.value}
-LOCAL: ${localPericia.value}`.toUpperCase()
+                genTXT.innerHTML = `<strong>${processo.value} - ${tipoIntimacao.value} - ${data} - ${executor}</strong><br>PERITO: ${perito.value}<br>LOCAL: ${localPericia.value}`
             else
-                genTXT.value = executor
+                genTXT.innerHTML = `<strong>${executor}</strong>`
     }
     else {
         if (localAudiencia.value.length > 0 || reu.value.length > 0) 
             if (origem.value.length > 0 && executor !== "OK")
-genTXT.value = `${processo.value} (ORIGEM ${origem.value}) - ${tipoIntimacao.value} - ${data} - ${executor}
-RÉU: ${reu.value}
-LOCAL: ${localAudiencia.value}`.toUpperCase()
+                genTXT.innerHTML = `${processo.value} (ORIGEM ${origem.value}) - ${tipoIntimacao.value} - ${data} - ${executor}<br>RÉU: ${reu.value}<br>LOCAL: ${localAudiencia.value}`
             else
-genTXT.value = `${processo.value} - ${tipoIntimacao.value} - ${data} - ${executor}
-RÉU: ${reu.value}
-LOCAL: ${localAudiencia.value}`.toUpperCase()
+                genTXT.innerHTML = `<strong>${processo.value} - ${tipoIntimacao.value} - ${data} - ${executor}</strong><br>RÉU: ${reu.value}<br>LOCAL: ${localAudiencia.value}`
         else {
             if (origem.value.length > 0 && executor !== "OK")
-                genTXT.value = `${processo.value} (ORIGEM ${origem.value}) - ${tipoIntimacao.value} - ${data} - ${executor}`.toUpperCase()
+                genTXT.innerHTML = `<strong>${processo.value} (ORIGEM ${origem.value}) - ${tipoIntimacao.value} - ${data} - ${executor}</strong>`
             else
-                if (executor == "OK")
-                    genTXT.value = executor
+                if (executor !== "OK")
+                    genTXT.innerHTML = `<strong>${processo.value} - ${tipoIntimacao.value} - ${data} - ${executor}</strong>`
                 else
-                    genTXT.value = `${processo.value} - ${tipoIntimacao.value} - ${data} - ${executor}`.toUpperCase()
+                    genTXT.innerHTML = `<strong>${executor}</strong>`
         }
     }
 
-    copiar()
+    await copiar()
 }
 
 function getExecutor (setor) {
@@ -560,7 +624,7 @@ function getExecutor (setor) {
         digito = processo.value[digito_indice]
     }
 
-    if (setor == "BANCÁRIO") {
+    /* if (setor == "BANCÁRIO") {
         const rodrigo = ['5']
         const gabriel = ['1','4','9']
         if (rodrigo.includes(digito) || intimacao.search("PAUTA") > -1 || intimacao.search("AUDIÊNCIA") == 0){
@@ -570,11 +634,20 @@ function getExecutor (setor) {
             return "GABRIEL"
         }
         return "LAIS"
-    }
+    } */
     if (setor == "CÍVIL") {
-        let ala = ["0","1","4","6","8"]
-        if (ala.includes(digito) && intimacao.search("PAUTA") == -1 && intimacao.search("AUDIÊNCIA") != 0)
-            return "ALÃ"
+        const ala = ['0','1']
+        const gabriel = ['2','3']
+        const lais = ['4','6','8']
+        //const rodrigo = ['5','7','9']
+        if (intimacao.search("PAUTA") != 0 && intimacao.search("AUDIÊNCIA") != 0) {
+            if (lais.includes(digito))
+                return "LAIS"
+            if (gabriel.includes(digito))
+                return "GABRIEL"
+            if (ala.includes(digito))
+                return "ALÃ"   
+        }
         return "RODRIGO"
     }
     if (setor == "PREVIDENCIÁRIO")
@@ -813,7 +886,7 @@ function autoComplete(tipo) {
 function addListeners () {
     let indice = -1
     const campo = document.querySelector('.campo')
-    const sugestoes = document.querySelector('.sugestoes')
+    const sugestoes = document.querySelector(".sugestoes")
 
     styleSugestoes()
 
@@ -825,7 +898,7 @@ function addListeners () {
         sugestoes.style.background = 'rgba(255, 255, 255, 0.8)'
     }
     
-    let termos = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PÉRICIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO','REMESSA CEJUSC','RECOLHER CUSTAS','AUDIÊNCIA DE INTERROGATÓRIO','MANIFESTAÇÃO SOBRE CERTIDÃO', 'MANIFESTAÇÃO SOBRE OFÍCIO', 'ANÁLISE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CONCILIAÇÃO + PROVAS','MANIFESTAÇÃO SOBRE RENAJUD', 'MANIFESTAÇÃO SOBRE PERITO + INDICAR TÉCNICOS + QUESITOS', 'CONTRAMINUTA', 'ANÁLISE DE SENTENÇA', 'RECURSO DE REVISTA', 'RECURSO ORDINÁRIO', 'AGRAVO INTERNO', 'EMBARGOS À EXECUÇÃO', 'AGRAVO DE PETIÇÃO', 'RESPOSTA À EXCEÇÃO DE INCOMPETÊNCIA', 'MANIFESTAÇÃO SOBRE EMBARGOS', 'AGRAVO DE INSTRUMENTO', 'ANÁLISE DE ACÓRDÃO', 'ANÁLISE DE DESPACHO', 'INDICAR ENDEREÇO']
+    let termos = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PÉRICIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO','REMESSA CEJUSC','RECOLHER CUSTAS','AUDIÊNCIA DE INTERROGATÓRIO','MANIFESTAÇÃO SOBRE CERTIDÃO', 'MANIFESTAÇÃO SOBRE OFÍCIO', 'ANÁLISE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CONCILIAÇÃO + PROVAS','MANIFESTAÇÃO SOBRE RENAJUD', 'MANIFESTAÇÃO SOBRE PERITO + INDICAR TÉCNICOS + QUESITOS', 'CONTRARRAZÕES + CONTRAMINUTA', 'ANÁLISE DE SENTENÇA', 'RECURSO DE REVISTA', 'RECURSO ORDINÁRIO', 'AGRAVO INTERNO', 'EMBARGOS À EXECUÇÃO', 'AGRAVO DE PETIÇÃO', 'RESPOSTA À EXCEÇÃO DE INCOMPETÊNCIA', 'MANIFESTAÇÃO SOBRE EMBARGOS', 'AGRAVO DE INSTRUMENTO', 'ANÁLISE DE ACÓRDÃO', 'ANÁLISE DE DESPACHO', 'INDICAR ENDEREÇO', 'PROMOVER EXECUÇÃO', 'PROSSEGUIR EXECUÇÃO', 'ACOMPANHAR CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE PREVJUD', 'MANIFESTAÇÃO SOBRE SNIPER', 'MANIFESTAÇÃO SOBRE QUITAÇÃO', 'MANIFESTAÇÃO SOBRE PAGAMENTO', 'MANIFESTAÇÃO SOBRE LITISPENDÊNCIA', 'MANIFESTAÇÃO SOBRE AR', 'MANIFESTAÇÃO SOBRE MANDADO', 'MANIFESTAÇÃO SOBRE IMPUGNAÇÃO', 'MANIFESTAÇÃO SOBRE PENHORA', 'MANIFESTAÇÃO SOBRE REALIZAÇÃO DA PERÍCIA']
     
     function autocompleteMatch(input) {
         
@@ -889,7 +962,7 @@ function addListeners () {
                 })
             })
         }
-
+        
         config()
     }
     campo.addEventListener('input', e => {

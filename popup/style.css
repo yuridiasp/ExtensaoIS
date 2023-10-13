@@ -158,3 +158,62 @@ input[type=number] {
     background: rgba(255, 255, 255, 0.8);
     z-index: 2;
 }
+
+.iconCheck {
+    color: darkorange;
+    animation-name: rotate;
+    animation-duration: 1s;
+    animation-iteration-count: infinite;
+}
+
+.iconErroValidate{
+    color: darkred;
+    animation-name: vibrate;
+    animation-duration: 100ms;
+    animation-iteration-count: 5;
+}
+
+.iconSucessValidate{
+    color: forestgreen;
+    animation-name: push;
+    animation-duration: 1000ms;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes vibrate {
+    0% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(20%);
+    }
+    50% {
+        transform: translateX(0);
+    }
+    75% {
+        transform: translateX(20%);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+@keyframes push {
+    0% {
+        transform: scale(0.5);
+    }
+    50% {
+        transform: scale(1.5);
+    }
+    100% {
+        transform: scale(1);
+    }
+}

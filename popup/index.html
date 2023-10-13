@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="style.css">
     <title>IS Generator</title>
 </head>
@@ -30,12 +31,14 @@
                                 <label for="processo">PROCESSO: </label>
                             </div>
                             <input class="textbox reset seletor focar" type="text" name="processo" id="processo">
+                            <i id="iconCheckVerify" class="fa fa-refresh"></i>
                         </div>
                         <div>
                             <div>
                                 <label for="origem">ORIGEM: </label>
                             </div>
                             <input class="textbox reset seletor focar" type="text" name="origem" id="origem">
+                            <i id="iconCheckVerifyOrigem" class="fa fa-refresh"></i>
                         </div>
                     </div>
                     <div>
@@ -107,14 +110,17 @@
                 <h4 id="tituloExc">SETOR RESPONSÁVEL: </h4>
                 <div id="divBTN">
                     <div>
-                        <div>
+                        <!-- <div>
                             <input class="btn-exc" type="button" value="BANCÁRIO" id="bancario">
-                        </div>
+                        </div> -->
                         <div>
                             <input class="btn-exc" type="button" value="CÍVIL" id="civil">
                         </div>
                         <div>
                             <input class="btn-exc" type="button" value="PREVIDENCIÁRIO" id="previdenciario">
+                        </div>
+                        <div>
+                            <input class="btn-exc" type="button" value="ADM" id="adm">
                         </div>
                     </div>
                     <div>
@@ -122,19 +128,16 @@
                             <input class="btn-exc" type="button" value="TRABALHISTA" id="trabalhista">
                         </div>
                         <div>
-                            <input class="btn-exc" type="button" value="ADM" id="adm">
+                            <input class="btn-exc" type="button" value="FINANCEIRO" id="financeiro">
                         </div>
                         <div>
-                            <input class="btn-exc" type="button" value="FINANCEIRO" id="financeiro">
+                            <input class="btn-exc" type="button" value="OK" id="OK">
                         </div>
                     </div>
                 </div>
-                <div>
-                    <input class="btn-exc btn-ok" type="button" value="OK" id="OK">
-                </div>
             </div>
             <div>
-                <textarea class="reset" id="genTXT" style="resize: none" disabled></textarea>
+                <div class="reset" id="genTXT" style="resize: none" disabled></div>
             </div>
         </form>
     </div>
