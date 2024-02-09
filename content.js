@@ -57,12 +57,18 @@ function updateEvent() {
                 // Cria um elemento de área de transferência temporário
                 let tempInput = document.createElement("h2")
                 let body = document.querySelector("body")
-                tempInput.style.position = 'fixed'
-                tempInput.style.opacity = 0
+                //tempInput.style.position = 'fixed'
+                //tempInput.style.opacity = 0
                 tempInput.style.textAlign = "center"
-                tempInput.style.font = "16px Times New Roman"
+                document.querySelector("*").style.removeProperty("font-family")
+                document.querySelector("*").style.setProperty("font-family",  "Times New Roman, serif", "important")
+                tempInput.style.fontSize = "16px"
+                tempInput.style.fontFamily = "Times New Roman, serif"
                 tempInput.style.color = "red"
+                tempInput.style.background = "none"
                 tempInput.style.fontWeight = "normal"
+                tempInput.style.border = "none"
+                console.log(tempInput)
                 tempInput.innerHTML = request.texto.replaceAll("&lt;","<").replaceAll("&gt;",">")
                 if (!body) {
                     body = document.createElement("body")
@@ -87,7 +93,7 @@ function updateEvent() {
                 selection.removeAllRanges()
 
                 //Remove tempInput
-                body.removeChild(tempInput)
+                //body.removeChild(tempInput)
 
                 //Envia a resposta
                 sendResponse({resposta: request.texto})
@@ -109,7 +115,7 @@ function autoSearchProcess(processo) {
     
     if (urlAtual == urlPageBuscaProcesso) {
         const processoInput = document.querySelector("#bsAdvProcessosTexto")
-        const btnFiltro = document.querySelector("#fdt-form > div:nth-child(6) > div:nth-child(4) > input")
+        const btnFiltro = document.querySelector("#fdt-form > div:nth-child(6) > div:nth-child(4) > input") || document.querySelector("#fdt-form > div:nth-child(4) > div:nth-child(3) > input")
 
         processoInput.value = processo
         btnFiltro.click()

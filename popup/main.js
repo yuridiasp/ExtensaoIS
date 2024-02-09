@@ -103,7 +103,7 @@ async function sendMessage(prazo, parametro) {
         let cont = 0
         for (let index = 0; index < tabs.length; index++) {
             
-            if (tabs[index].url.search("https://www.tjse.jus.br/tjnet/portaladv/") == 0 || tabs[index].url.search("https://pje.trt20.jus.br/pjekz/processo/") == 0) {
+            if (tabs[index].url.search("https://www.tjse.jus.br/tjnet/portaladv/") == 0 || tabs[index].url.search("https://pje.trt20.jus.br/pjekz/processo/") == 0 || tabs[index].url.search("https://pje.trt15.jus.br/pjekz/processo/") == 0) {
                 break
             }
             
@@ -227,6 +227,7 @@ function FeriadosFixos (ano, competencia, parametro,) {
             [9,28], //DIA DO FUNCIONÁRIO PÚBLICO
             [10,1], //LEI FEDERAL Nº 5.010/66
             [11,8], //DIA DA JUSTIÇA
+            [10,3] //ATO SGP.PR Nº 077/2023 (EXPEDIENTE SUSPENSO)
         ],
         TRF1: [],
         'SE': [
@@ -574,6 +575,10 @@ async function gerarTxt (executor) {
     let final = `${prazoFinal.value.slice(8,10)}/${prazoFinal.value.slice(5,7)}`
     let data
 
+    if (tipoIntimacao.value == "ALVARÁ" && executor == "(FINANCEIRO)") {
+        executor =  "(FINANCEIRO - TAREFA AVULSA)"
+    }
+
     if (init == final)
         if (horario.value.length > 0)
             data = `(${init} ÀS ${horario.value})`
@@ -595,7 +600,10 @@ async function gerarTxt (executor) {
             if (origem.value.length > 0 && executor !== "OK")
                 genTXT.innerHTML = `${processo.value} (ORIGEM ${origem.value}) - ${tipoIntimacao.value} - ${data} - ${executor}<br>RÉU: ${reu.value}<br>LOCAL: ${localAudiencia.value}`
             else
-                genTXT.innerHTML = `<strong>${processo.value} - ${tipoIntimacao.value} - ${data} - ${executor}</strong><br>RÉU: ${reu.value}<br>LOCAL: ${localAudiencia.value}`
+                if (executor !== "OK")
+                    genTXT.innerHTML = `<strong>${processo.value} - ${tipoIntimacao.value} - ${data} - ${executor}</strong><br>RÉU: ${reu.value}<br>LOCAL: ${localAudiencia.value}`
+                else
+                    genTXT.innerHTML = `<strong>${executor}</strong>`
         else {
             if (origem.value.length > 0 && executor !== "OK")
                 genTXT.innerHTML = `<strong>${processo.value} (ORIGEM ${origem.value}) - ${tipoIntimacao.value} - ${data} - ${executor}</strong>`
@@ -636,13 +644,10 @@ function getExecutor (setor) {
         return "LAIS"
     } */
     if (setor == "CÍVIL") {
-        const ala = ['0','1']
-        const gabriel = ['2','3']
-        const lais = ['4','6','8']
-        //const rodrigo = ['5','7','9']
+        const ala = ['0','1', '8']
+        const gabriel = ['2','3', '4', '6']
+        //const rodrigo = ['5','7','9','4','6','8']
         if (intimacao.search("PAUTA") != 0 && intimacao.search("AUDIÊNCIA") != 0) {
-            if (lais.includes(digito))
-                return "LAIS"
             if (gabriel.includes(digito))
                 return "GABRIEL"
             if (ala.includes(digito))
@@ -898,7 +903,7 @@ function addListeners () {
         sugestoes.style.background = 'rgba(255, 255, 255, 0.8)'
     }
     
-    let termos = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PÉRICIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO','REMESSA CEJUSC','RECOLHER CUSTAS','AUDIÊNCIA DE INTERROGATÓRIO','MANIFESTAÇÃO SOBRE CERTIDÃO', 'MANIFESTAÇÃO SOBRE OFÍCIO', 'ANÁLISE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CONCILIAÇÃO + PROVAS','MANIFESTAÇÃO SOBRE RENAJUD', 'MANIFESTAÇÃO SOBRE PERITO + INDICAR TÉCNICOS + QUESITOS', 'CONTRARRAZÕES + CONTRAMINUTA', 'ANÁLISE DE SENTENÇA', 'RECURSO DE REVISTA', 'RECURSO ORDINÁRIO', 'AGRAVO INTERNO', 'EMBARGOS À EXECUÇÃO', 'AGRAVO DE PETIÇÃO', 'RESPOSTA À EXCEÇÃO DE INCOMPETÊNCIA', 'MANIFESTAÇÃO SOBRE EMBARGOS', 'AGRAVO DE INSTRUMENTO', 'ANÁLISE DE ACÓRDÃO', 'ANÁLISE DE DESPACHO', 'INDICAR ENDEREÇO', 'PROMOVER EXECUÇÃO', 'PROSSEGUIR EXECUÇÃO', 'ACOMPANHAR CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE PREVJUD', 'MANIFESTAÇÃO SOBRE SNIPER', 'MANIFESTAÇÃO SOBRE QUITAÇÃO', 'MANIFESTAÇÃO SOBRE PAGAMENTO', 'MANIFESTAÇÃO SOBRE LITISPENDÊNCIA', 'MANIFESTAÇÃO SOBRE AR', 'MANIFESTAÇÃO SOBRE MANDADO', 'MANIFESTAÇÃO SOBRE IMPUGNAÇÃO', 'MANIFESTAÇÃO SOBRE PENHORA', 'MANIFESTAÇÃO SOBRE REALIZAÇÃO DA PERÍCIA']
+    let termos = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO', 'MANIFESTAÇÃO SOBRE LAUDO COMPLEMENTAR','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PÉRICIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO','REMESSA CEJUSC','RECOLHER CUSTAS','AUDIÊNCIA DE INTERROGATÓRIO','MANIFESTAÇÃO SOBRE CERTIDÃO', 'MANIFESTAÇÃO SOBRE OFÍCIO', 'ANÁLISE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CONCILIAÇÃO + PROVAS','MANIFESTAÇÃO SOBRE RENAJUD', 'MANIFESTAÇÃO SOBRE PERITO + INDICAR TÉCNICOS + QUESITOS', 'CONTRARRAZÕES + CONTRAMINUTA', 'ANÁLISE DE SENTENÇA', 'RECURSO DE REVISTA', 'RECURSO ORDINÁRIO', 'AGRAVO INTERNO', 'EMBARGOS À EXECUÇÃO', 'AGRAVO DE PETIÇÃO', 'RESPOSTA À EXCEÇÃO DE INCOMPETÊNCIA', 'MANIFESTAÇÃO SOBRE EMBARGOS', 'AGRAVO DE INSTRUMENTO', 'ANÁLISE DE ACÓRDÃO', 'ANÁLISE DE DESPACHO', 'INDICAR ENDEREÇO', 'PROMOVER EXECUÇÃO', 'PROSSEGUIR EXECUÇÃO', 'ACOMPANHAR CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE PREVJUD', 'MANIFESTAÇÃO SOBRE SNIPER', 'MANIFESTAÇÃO SOBRE QUITAÇÃO', 'MANIFESTAÇÃO SOBRE PAGAMENTO', 'MANIFESTAÇÃO SOBRE LITISPENDÊNCIA', 'MANIFESTAÇÃO SOBRE AR', 'MANIFESTAÇÃO SOBRE MANDADO', 'MANIFESTAÇÃO SOBRE IMPUGNAÇÃO', 'MANIFESTAÇÃO SOBRE PENHORA', 'MANIFESTAÇÃO SOBRE REALIZAÇÃO DA PERÍCIA', 'MANIFESTAÇÃO SOBRE EXCEÇÃO DE PRÉ-EXECUTIVIDADE', 'PERÍCIA SOCIAL', 'MANIFESTAÇÃO SOBRE PRESCRIÇÃO']
     
     function autocompleteMatch(input) {
         
