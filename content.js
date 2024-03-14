@@ -57,8 +57,8 @@ function updateEvent() {
                 // Cria um elemento de área de transferência temporário
                 let tempInput = document.createElement("h2")
                 let body = document.querySelector("body")
-                //tempInput.style.position = 'fixed'
-                //tempInput.style.opacity = 0
+                tempInput.style.position = 'fixed'
+                tempInput.style.opacity = 0
                 tempInput.style.textAlign = "center"
                 document.querySelector("*").style.removeProperty("font-family")
                 document.querySelector("*").style.setProperty("font-family",  "Times New Roman, serif", "important")
@@ -68,7 +68,6 @@ function updateEvent() {
                 tempInput.style.background = "none"
                 tempInput.style.fontWeight = "normal"
                 tempInput.style.border = "none"
-                console.log(tempInput)
                 tempInput.innerHTML = request.texto.replaceAll("&lt;","<").replaceAll("&gt;",">")
                 if (!body) {
                     body = document.createElement("body")
@@ -93,7 +92,7 @@ function updateEvent() {
                 selection.removeAllRanges()
 
                 //Remove tempInput
-                //body.removeChild(tempInput)
+                body.removeChild(tempInput)
 
                 //Envia a resposta
                 sendResponse({resposta: request.texto})
