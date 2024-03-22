@@ -167,7 +167,36 @@ function connectPort() {
     })
 }
 
+function getPartes () {
+    const trPartes = document.querySelector('#downFrame').contentDocument.documentElement.querySelector('#mainFrame').contentDocument.querySelector("body > form > table:nth-child(12)").querySelector("tbody").children
+
+    if (trPartes) {
+        const partes = {}
+    
+        for (let c = 1; c < trPartes.length; c++) {
+            partes[trPartes[c].children[0].innerText.trim().toLowerCase()] = trPartes[c].children[1].innerText.trim()
+        }
+    
+        return partes
+    }
+
+    return null
+}
+
 (function () {
     updateEvent()
     connectPort()
+
+    // Select the node that will be observed for mutations
+    const frame = document.querySelector('#downFrame').contentDocument
+
+    try {
+        const targetNode = frame.documentElement.querySelector("#mainFrame")
+
+        targetNode.onload = () => {
+            const partes = getPartes()
+        }
+    } catch (error) {
+        // console.log(error)
+    }
 })()
