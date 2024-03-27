@@ -921,53 +921,57 @@ function autoComplete(tipo) {
 
 function addListeners () {
     let indice = -1
-    const campo = document.querySelector('.campo'),
-        sugestoes = document.querySelector(".sugestoes"),
-        termos = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO', 'MANIFESTAÇÃO SOBRE LAUDO COMPLEMENTAR','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PERÍCIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO','REMESSA CEJUSC','RECOLHER CUSTAS','AUDIÊNCIA DE INTERROGATÓRIO','MANIFESTAÇÃO SOBRE CERTIDÃO', 'MANIFESTAÇÃO SOBRE OFÍCIO', 'ANÁLISE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CONCILIAÇÃO + PROVAS','MANIFESTAÇÃO SOBRE RENAJUD', 'MANIFESTAÇÃO SOBRE PERITO + INDICAR TÉCNICOS + QUESITOS', 'CONTRARRAZÕES + CONTRAMINUTA', 'ANÁLISE DE SENTENÇA', 'RECURSO DE REVISTA', 'RECURSO ORDINÁRIO', 'AGRAVO INTERNO', 'EMBARGOS À EXECUÇÃO', 'AGRAVO DE PETIÇÃO', 'RESPOSTA À EXCEÇÃO DE INCOMPETÊNCIA', 'MANIFESTAÇÃO SOBRE EMBARGOS', 'AGRAVO DE INSTRUMENTO', 'ANÁLISE DE ACÓRDÃO', 'ANÁLISE DE DESPACHO', 'INDICAR ENDEREÇO', 'PROMOVER EXECUÇÃO', 'PROSSEGUIR EXECUÇÃO', 'ACOMPANHAR CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE PREVJUD', 'MANIFESTAÇÃO SOBRE SNIPER', 'MANIFESTAÇÃO SOBRE QUITAÇÃO', 'MANIFESTAÇÃO SOBRE PAGAMENTO', 'MANIFESTAÇÃO SOBRE LITISPENDÊNCIA', 'MANIFESTAÇÃO SOBRE AR', 'MANIFESTAÇÃO SOBRE MANDADO', 'MANIFESTAÇÃO SOBRE IMPUGNAÇÃO', 'MANIFESTAÇÃO SOBRE PENHORA', 'MANIFESTAÇÃO SOBRE REALIZAÇÃO DA PERÍCIA', 'MANIFESTAÇÃO SOBRE EXCEÇÃO DE PRÉ-EXECUTIVIDADE', 'PERÍCIA SOCIAL', 'MANIFESTAÇÃO SOBRE PRESCRIÇÃO', 'DECISÃO + QUESITOS']
+    const sugestoesTipoIntimacao = document.querySelector(".sugestoes"),
+        sugestoesAudiencia = document.querySelector(".sugestoes-audiencia"),
+        termosTiposIntimacao = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO', 'MANIFESTAÇÃO SOBRE LAUDO COMPLEMENTAR','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PERÍCIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO','REMESSA CEJUSC','RECOLHER CUSTAS','AUDIÊNCIA DE INTERROGATÓRIO','MANIFESTAÇÃO SOBRE CERTIDÃO', 'MANIFESTAÇÃO SOBRE OFÍCIO', 'ANÁLISE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CONCILIAÇÃO + PROVAS','MANIFESTAÇÃO SOBRE RENAJUD', 'MANIFESTAÇÃO SOBRE PERITO + INDICAR TÉCNICOS + QUESITOS', 'CONTRARRAZÕES + CONTRAMINUTA', 'ANÁLISE DE SENTENÇA', 'RECURSO DE REVISTA', 'RECURSO ORDINÁRIO', 'AGRAVO INTERNO', 'EMBARGOS À EXECUÇÃO', 'AGRAVO DE PETIÇÃO', 'RESPOSTA À EXCEÇÃO DE INCOMPETÊNCIA', 'MANIFESTAÇÃO SOBRE EMBARGOS', 'AGRAVO DE INSTRUMENTO', 'ANÁLISE DE ACÓRDÃO', 'ANÁLISE DE DESPACHO', 'INDICAR ENDEREÇO', 'PROMOVER EXECUÇÃO', 'PROSSEGUIR EXECUÇÃO', 'ACOMPANHAR CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE PREVJUD', 'MANIFESTAÇÃO SOBRE SNIPER', 'MANIFESTAÇÃO SOBRE QUITAÇÃO', 'MANIFESTAÇÃO SOBRE PAGAMENTO', 'MANIFESTAÇÃO SOBRE LITISPENDÊNCIA', 'MANIFESTAÇÃO SOBRE AR', 'MANIFESTAÇÃO SOBRE MANDADO', 'MANIFESTAÇÃO SOBRE IMPUGNAÇÃO', 'MANIFESTAÇÃO SOBRE PENHORA', 'MANIFESTAÇÃO SOBRE REALIZAÇÃO DA PERÍCIA', 'MANIFESTAÇÃO SOBRE EXCEÇÃO DE PRÉ-EXECUTIVIDADE', 'PERÍCIA SOCIAL', 'MANIFESTAÇÃO SOBRE PRESCRIÇÃO', 'DECISÃO + QUESITOS'],
+        termosLocaisAudiencias = Object.keys(locaisAudiencias)
 
-    function styleSugestoes() {
-        sugestoes.style.position = 'absolute'
-        sugestoes.style.border = '1px #ccc'
-        sugestoes.style.alignItems = 'center'
-        sugestoes.style.padding = '3px'
-        sugestoes.style.background = 'rgba(255, 255, 255, 0.8)'
+    function styleSugestoes(elemento) {
+        elemento.style.position = 'absolute'
+        elemento.style.border = '1px #ccc'
+        elemento.style.alignItems = 'center'
+        elemento.style.padding = '3px'
+        elemento.style.background = 'rgba(255, 255, 255, 0.8)'
     }
 
-    styleSugestoes()
+    styleSugestoes(sugestoesTipoIntimacao)
+    styleSugestoes(sugestoesAudiencia)
     
-    function autocompleteMatch(input) {
+    function autocompleteMatch(input, arrayTermos) {
         
         let reg = new RegExp(input.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, ""))
 
-        if (input.length == 0)
+        if (input.length === 0)
             return []
         
-        return termos.filter(termo => {
+        return arrayTermos.filter(termo => {
             if (termo.normalize('NFD').replace(/[\u0300-\u036f]/g, "").match(reg)){
                 return termo
             }
         })
     }
     
-    function mostrarResultados (input) {
-        sugestoes.innerHTML = ''
+    function mostrarResultados (input, arrayTermos, divSugestoes) {
+        divSugestoes.innerHTML = ''
         let lista = ''
-        let termos = autocompleteMatch(input)
+        let termos = autocompleteMatch(input, arrayTermos)
+
         for (i = 0; i < termos.length; i++) {
             lista += '<li>' + termos[i] + '</li>'
         }
-        if (campo.value.length) {
-            sugestoes.innerHTML = '<ul>' + lista + '</ul>'
-            sugestoes.style.display = 'block'
+
+        if (input.value.length) {
+            divSugestoes.innerHTML = '<ul>' + lista + '</ul>'
+            divSugestoes.style.display = 'block'
         }
         else
-            sugestoes.style.display = 'none'
+            divSugestoes.style.display = 'none'
 
 
         
-        function config () {
-            let ul = document.querySelector('div.sugestoes ul')
-            let li = document.querySelectorAll('div.sugestoes ul li')
+        function config (divSugestoes) {
+            let ul = divSugestoes.querySelector('ul')
+            let li = divSugestoes.querySelectorAll('ul li')
             
             ul.style.listStyleType = "none"
             ul.style.padding = '0px'
@@ -976,11 +980,11 @@ function addListeners () {
                 e.style.cursor = 'pointer'
                 e.style.padding = '5px 0'
                 e.style.margin = '0px'
-                e.addEventListener('mouseover', element => {
+                e.addEventListener('mouseover', event => {
                     li.forEach (el => {
                         el.style.background = 'none'
                     })
-                    element.target.style.background = '#eee'
+                    event.target.style.background = '#eee'
                     indice = -1
                 })
                 e.addEventListener('mouseleave', () => {
@@ -989,9 +993,9 @@ function addListeners () {
                     })
                     indice = -1
                 })
-                e.addEventListener('click', element => {
-                    campo.value = element.target.innerHTML
-                    sugestoes.style.display = 'none'
+                e.addEventListener('click', event => {
+                    input.value = event.target.innerHTML
+                    divSugestoes.style.display = 'none'
                     setAnalise(saveInfoAnalise())
                     updateSection(tipoIntimacao.value)
                 })
@@ -999,7 +1003,7 @@ function addListeners () {
         }
         
         if (input.value.length)
-            config()
+            config(divSugestoes)
     }
 
     processo.addEventListener('input', event => {
@@ -1024,28 +1028,55 @@ function addListeners () {
         }
     })
 
-    campo.addEventListener('input', e => {
+    tipoIntimacao.addEventListener('input', e => {
         setTimeout(() => {
-            mostrarResultados(e.target)
+            mostrarResultados(e.target, termosTiposIntimacao, sugestoesTipoIntimacao)
         }, 100)
     })
 
-    campo.addEventListener('focus', e => {
+    tipoIntimacao.addEventListener('focus', e => {
         setTimeout(() => {
-            mostrarResultados(e.target)
+            mostrarResultados(e.target, termosTiposIntimacao, sugestoesTipoIntimacao)
         }, 100)
     })
 
-    campo.addEventListener('blur', e => {
+    tipoIntimacao.addEventListener('blur', () => {
         setTimeout(() => {
-            sugestoes.style.display = 'none'
+            sugestoesTipoIntimacao.style.display = 'none'
+            index = -1
+        }, 200)
+    })
+    
+    localAudiencia.addEventListener('input', e => {
+        setTimeout(() => {
+            mostrarResultados(e.target, termosLocaisAudiencias, sugestoesAudiencia)
+        }, 100)
+    })
+
+    localAudiencia.addEventListener('focus', e => {
+        setTimeout(() => {
+            mostrarResultados(e.target, termosLocaisAudiencias, sugestoesAudiencia)
+        }, 100)
+    })
+
+    localAudiencia.addEventListener('blur', () => {
+        setTimeout(() => {
+            sugestoesAudiencia.style.display = 'none'
+            index = -1
         }, 200)
     })
 
-    document.addEventListener('keydown', e => {
-        let elements = document.querySelectorAll('#processoCampos > div:nth-child(1) > div:nth-child(2) > div.sugestoes > ul > li')
-        if (sugestoes.style.display != "none") {
-            if (e.key == "ArrowUp") {
+    document.addEventListener('keydown', e => {   
+        let elements = document.querySelectorAll('div.sugestoes > ul > li'),
+            input = sugestoesTipoIntimacao
+
+        if (document.activeElement === localAudiencia) {
+            elements = document.querySelectorAll('div.sugestoes-audiencia > ul > li')
+            input = sugestoesAudiencia
+        }
+
+        if (input.style.display != "none") {
+            if (e.key === "ArrowUp") {
                 if (indice > 0) {
                     --indice
                     elements.forEach(e => {
@@ -1054,7 +1085,7 @@ function addListeners () {
                     elements[indice].style.background = '#eee'
                 }
             }
-            if (e.key == "ArrowDown") {
+            if (e.key === "ArrowDown") {
                 if (indice < elements.length-1) {
                     ++indice
                     elements.forEach(e => {
@@ -1063,9 +1094,13 @@ function addListeners () {
                     elements[indice].style.background = '#eee'
                 }
             }
-            if (e.key == "Enter")
+            if (e.key === "Enter") {
                 elements[indice].click()
+            }
+
+            if (document.activeElement === tipoIntimacao) {
                 updateSection(tipoIntimacao.value)
+            }
         }
             
     })
