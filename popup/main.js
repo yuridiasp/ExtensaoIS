@@ -4,6 +4,7 @@ const processo = document.querySelector("#processo"),
     prazoInicial = document.querySelector("#prazoInicial"),
     prazoFinal = document.querySelector("#prazoFinal"),
     horario = document.querySelector("#horario"),
+    tarefaAvulsa = document.querySelector("#tarefaAvulsa"),
     genTXT = document.querySelector("#genTXT"),
     btnSetor = document.querySelectorAll(".btn-exc"),
     seletor = document.querySelectorAll(".seletor"),
@@ -206,7 +207,6 @@ function FeriadosFixos (ano, competencia, parametro,) {
             [9,28], //DIA DO FUNCIONÁRIO PÚBLICO
             [10,1], //LEI FEDERAL Nº 5.010/66
             [11,8], //DIA DA JUSTIÇA
-            [10,3] //ATO SGP.PR Nº 077/2023 (EXPEDIENTE SUSPENSO)
         ],
         TRF1: [],
         'SE': [
@@ -557,6 +557,9 @@ async function gerarTxt (executor) {
     const init = `${prazoInicial.value.slice(8,10)}/${prazoInicial.value.slice(5,7)}`,
         final = `${prazoFinal.value.slice(8,10)}/${prazoFinal.value.slice(5,7)}`
 
+    if (tarefaAvulsa.checked)
+        executor += " (TAREFA AVULSA)"
+
     let data
 
     /* if (tipoIntimacao.value == "ALVARÁ" && executor == "(FINANCEIRO)")
@@ -601,12 +604,14 @@ async function gerarTxt (executor) {
 
 function getExecutor (setor) {
     const intimacao = tipoIntimacao.value.toUpperCase()
-    let digito_indice,
+    let numero_processo = processo.value,
+        digito_indice,
         digito
 
     if (origem.value.length) {
         digito_indice = origem.value.length-1
         digito = origem.value[digito_indice]
+        numero_processo = origem.value
     }
     else {
         digito_indice = processo.value.length-1
@@ -628,7 +633,7 @@ function getExecutor (setor) {
         const ala = ['0','1', '8']
         const gabriel = ['2','3', '4', '6']
         //const rodrigo = ['5','7','9','4','6','8']
-        if (intimacao.search("PAUTA") != 0 && intimacao.search("AUDIÊNCIA") != 0) {
+        if (intimacao.search("PAUTA") != 0 && intimacao.search("AUDIÊNCIA") != 0 && numero_processo.length === 12) {
             if (gabriel.includes(digito))
                 return "GABRIEL"
             if (ala.includes(digito))
@@ -636,6 +641,7 @@ function getExecutor (setor) {
         }
         return "RODRIGO"
     }
+
     if (setor == "PREVIDENCIÁRIO")
         return "KEVEN"
 
@@ -653,37 +659,40 @@ function getExecutor (setor) {
 
 async function loadInfoAnalise (getIS) {
     
-    if (getIS.data_publicacao != null)
+    if (getIS.data_publicacao)
         dataPub.value = getIS.data_publicacao
 
-    if (getIS.processo != null)
+    if (getIS.processo)
         processo.value = getIS.processo
 
-    if (getIS.origem != null)
+    if (getIS.origem)
         origem.value = getIS.origem
 
-    if (getIS.tipoIntimacao != null)
+    if (getIS.tipoIntimacao)
         tipoIntimacao.value = getIS.tipoIntimacao
 
-    if (getIS.prazoInicial != null)
+    if (getIS.prazoInicial)
         prazoInicial.value = getIS.prazoInicial
 
-    if (getIS.prazoFinal != null)
+    if (getIS.prazoFinal)
         prazoFinal.value = getIS.prazoFinal
 
-    if (getIS.horario != null)
+    if (getIS.horario)
         horario.value = getIS.horario
 
-    if (perito.value != null)
+    if (getIS.tarefaAvulsa)
+        tarefaAvulsa.checked = true
+
+    if (getIS.infoPericia.perito)
         perito.value = getIS.infoPericia.perito
 
-    if (localPericia.value != null)
+    if (getIS.infoPericia.local)
         localPericia.value = getIS.infoPericia.local
 
-    if (reu.value != null)
+    if (getIS.infoAudiencia.reu)
         reu.value = getIS.infoAudiencia.reu
 
-    if (localAudiencia.value != null)
+    if (getIS.infoAudiencia.local)
         localAudiencia.value = getIS.infoAudiencia.local
     
     updateSection(tipoIntimacao.value)
@@ -700,6 +709,7 @@ function saveInfoAnalise () {
         prazoInicial: null,
         prazoFinal: null,
         horario: null,
+        tarefaAvulsa: null,
         infoAudiencia: {
             reu: null,
             local: null
@@ -731,6 +741,8 @@ function saveInfoAnalise () {
     if (horario.value.length)
         is.horario = horario.value
 
+    is.tarefaAvulsa = tarefaAvulsa.checked
+    
     if (perito.value.length)
         is.infoPericia.perito = perito.value
 
@@ -755,6 +767,7 @@ function resetAnalise() {
         prazoInicial: null,
         prazoFinal: null,
         horario: null,
+        tarefaAvulsa: null,
         infoAudiencia: {
             reu: null,
             local: null
@@ -938,23 +951,22 @@ function addListeners () {
     styleSugestoes(sugestoesAudiencia)
     
     function autocompleteMatch(input, arrayTermos) {
-        
-        let reg = new RegExp(input.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, ""))
+        const inputValueNormalizado = removeAcentuacaoString(input.value.trim()),
+            regex = new RegExp(inputValueNormalizado)
 
         if (input.length === 0)
             return []
         
-        return arrayTermos.filter(termo => {
-            if (termo.normalize('NFD').replace(/[\u0300-\u036f]/g, "").match(reg)){
-                return termo
-            }
-        })
+        const sugestoes = arrayTermos.filter(termo => removeAcentuacaoString(termo).match(regex))
+
+        return sugestoes
     }
     
     function mostrarResultados (input, arrayTermos, divSugestoes) {
-        divSugestoes.innerHTML = ''
+        const termos = autocompleteMatch(input, arrayTermos)
         let lista = ''
-        let termos = autocompleteMatch(input, arrayTermos)
+
+        divSugestoes.innerHTML = ''
 
         for (i = 0; i < termos.length; i++) {
             lista += '<li>' + termos[i] + '</li>'
@@ -970,8 +982,8 @@ function addListeners () {
 
         
         function config (divSugestoes) {
-            let ul = divSugestoes.querySelector('ul')
-            let li = divSugestoes.querySelectorAll('ul li')
+            const ul = divSugestoes.querySelector('ul'),
+                li = divSugestoes.querySelectorAll('ul li')
             
             ul.style.listStyleType = "none"
             ul.style.padding = '0px'
@@ -998,6 +1010,7 @@ function addListeners () {
                     divSugestoes.style.display = 'none'
                     setAnalise(saveInfoAnalise())
                     updateSection(tipoIntimacao.value)
+                    indice = -1
                 })
             })
         }
@@ -1066,7 +1079,7 @@ function addListeners () {
         }, 200)
     })
 
-    document.addEventListener('keydown', e => {   
+    document.addEventListener('keydown', event => {   
         let elements = document.querySelectorAll('div.sugestoes > ul > li'),
             input = sugestoesTipoIntimacao
 
@@ -1076,7 +1089,7 @@ function addListeners () {
         }
 
         if (input.style.display != "none") {
-            if (e.key === "ArrowUp") {
+            if (event.key === "ArrowUp") {
                 if (indice > 0) {
                     --indice
                     elements.forEach(e => {
@@ -1085,7 +1098,7 @@ function addListeners () {
                     elements[indice].style.background = '#eee'
                 }
             }
-            if (e.key === "ArrowDown") {
+            if (event.key === "ArrowDown") {
                 if (indice < elements.length-1) {
                     ++indice
                     elements.forEach(e => {
@@ -1094,7 +1107,7 @@ function addListeners () {
                     elements[indice].style.background = '#eee'
                 }
             }
-            if (e.key === "Enter") {
+            if (event.key === "Enter") {
                 elements[indice].click()
             }
 
@@ -1102,18 +1115,18 @@ function addListeners () {
                 updateSection(tipoIntimacao.value)
             }
         }
-            
     })
     
     seletor.forEach(element => {
-        element.addEventListener('input', event => {
+        element.addEventListener('input', async event => {
             event.target.value = event.target.value.toUpperCase()
             if (event.target == tipoIntimacao) {
                 updateSection(event.target.value)
             }
             if (event.target == prazoFinal)
                 prazoInicial.value = prazoFinal.value
-            setAnalise(saveInfoAnalise())
+
+            await setAnalise(saveInfoAnalise())
         })
     })
 

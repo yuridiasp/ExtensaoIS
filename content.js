@@ -188,15 +188,21 @@ function getPartes () {
     connectPort()
 
     // Select the node that will be observed for mutations
-    const frame = document.querySelector('#downFrame').contentDocument
+    let frame = null
+    const downFrame = document.querySelector('#downFrame')
+    if (downFrame) {
+        frame = downFrame.contentDocument
+    }
 
-    try {
-        const targetNode = frame.documentElement.querySelector("#mainFrame")
-
-        targetNode.onload = () => {
-            const partes = getPartes()
+    if (frame) {
+        try {
+            const targetNode = frame.documentElement.querySelector("#mainFrame")
+    
+            targetNode.onload = () => {
+                //const partes = getPartes()
+            }
+        } catch (error) {
+            // console.log(error)
         }
-    } catch (error) {
-        // console.log(error)
     }
 })()
