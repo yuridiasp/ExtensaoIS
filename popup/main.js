@@ -160,7 +160,7 @@ function FeriadosFixos (ano, competencia, parametro,) {
         diaFimFeriasAdvogados = 20,
         mesFimFeriasAdvogados = 0
 
-    function setIntervaloFeriadosJudiciario(diaInicio, mesInicio, diaFinal, mesFinal) {
+    const setIntervaloFeriadosJudiciario = (diaInicio, mesInicio, diaFinal, mesFinal) => {
         let feriados = [],
             condicao = true,
             dia = diaInicio,
@@ -212,6 +212,7 @@ function FeriadosFixos (ano, competencia, parametro,) {
         'SE': [
             [5,24], //SÃO JOÃO
             [6,8], //EMANCIPAÇÃO POLÍTICA DE SERGIPE
+            [4,31] //Ponto Facultativo 2024
         ],
         'AQUIDABA': [
             [3,4], //EMANCIPAÇÃO POLÍTICA
@@ -479,7 +480,7 @@ function FeriadosFixos (ano, competencia, parametro,) {
             resultados.push(new Date(ano-1, feriado[indexMes], feriado[indexDia]))
         }
     })
-
+    
     return resultados
 }
 
@@ -528,15 +529,6 @@ async function copiar() {
             }
         })
     })
-  
-
-    /* navigator.clipboard.writeText(genTXT.innerHTML)
-        .then(() => {
-        console.log("Text copied to clipboard...")
-    })
-        .catch(err => {
-        console.log('Something went wrong', err);
-    }) */
 }
 
 async function restore() {
@@ -557,7 +549,7 @@ async function gerarTxt (executor) {
     const init = `${prazoInicial.value.slice(8,10)}/${prazoInicial.value.slice(5,7)}`,
         final = `${prazoFinal.value.slice(8,10)}/${prazoFinal.value.slice(5,7)}`
 
-    if (tarefaAvulsa.checked)
+    if (tarefaAvulsa.checked && executor !== "OK")
         executor += " (TAREFA AVULSA)"
 
     let data
@@ -934,27 +926,20 @@ function autoComplete(tipo) {
 
 function addListeners () {
     let indice = -1
-    const sugestoesTipoIntimacao = document.querySelector(".sugestoes"),
-        sugestoesAudiencia = document.querySelector(".sugestoes-audiencia"),
+    const sugestoesTipoIntimacao = document.querySelector("#sugestoes"),
+        sugestoesAudiencia = document.querySelector("#sugestoes-audiencia"),
         termosTiposIntimacao = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO', 'MANIFESTAÇÃO SOBRE LAUDO COMPLEMENTAR','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PERÍCIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO','REMESSA CEJUSC','RECOLHER CUSTAS','AUDIÊNCIA DE INTERROGATÓRIO','MANIFESTAÇÃO SOBRE CERTIDÃO', 'MANIFESTAÇÃO SOBRE OFÍCIO', 'ANÁLISE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CONCILIAÇÃO + PROVAS','MANIFESTAÇÃO SOBRE RENAJUD', 'MANIFESTAÇÃO SOBRE PERITO + INDICAR TÉCNICOS + QUESITOS', 'CONTRARRAZÕES + CONTRAMINUTA', 'ANÁLISE DE SENTENÇA', 'RECURSO DE REVISTA', 'RECURSO ORDINÁRIO', 'AGRAVO INTERNO', 'EMBARGOS À EXECUÇÃO', 'AGRAVO DE PETIÇÃO', 'RESPOSTA À EXCEÇÃO DE INCOMPETÊNCIA', 'MANIFESTAÇÃO SOBRE EMBARGOS', 'AGRAVO DE INSTRUMENTO', 'ANÁLISE DE ACÓRDÃO', 'ANÁLISE DE DESPACHO', 'INDICAR ENDEREÇO', 'PROMOVER EXECUÇÃO', 'PROSSEGUIR EXECUÇÃO', 'ACOMPANHAR CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE PREVJUD', 'MANIFESTAÇÃO SOBRE SNIPER', 'MANIFESTAÇÃO SOBRE QUITAÇÃO', 'MANIFESTAÇÃO SOBRE PAGAMENTO', 'MANIFESTAÇÃO SOBRE LITISPENDÊNCIA', 'MANIFESTAÇÃO SOBRE AR', 'MANIFESTAÇÃO SOBRE MANDADO', 'MANIFESTAÇÃO SOBRE IMPUGNAÇÃO', 'MANIFESTAÇÃO SOBRE PENHORA', 'MANIFESTAÇÃO SOBRE REALIZAÇÃO DA PERÍCIA', 'MANIFESTAÇÃO SOBRE EXCEÇÃO DE PRÉ-EXECUTIVIDADE', 'PERÍCIA SOCIAL', 'MANIFESTAÇÃO SOBRE PRESCRIÇÃO', 'DECISÃO + QUESITOS'],
         termosLocaisAudiencias = Object.keys(locaisAudiencias)
 
-    function styleSugestoes(elemento) {
-        elemento.style.position = 'absolute'
-        elemento.style.border = '1px #ccc'
-        elemento.style.alignItems = 'center'
-        elemento.style.padding = '3px'
-        elemento.style.background = 'rgba(255, 255, 255, 0.8)'
+    const resetIndex = () => {
+        indice = -1
     }
-
-    styleSugestoes(sugestoesTipoIntimacao)
-    styleSugestoes(sugestoesAudiencia)
     
-    function autocompleteMatch(input, arrayTermos) {
+    const autocompleteMatch = (input, arrayTermos) => {
         const inputValueNormalizado = removeAcentuacaoString(input.value.trim()),
             regex = new RegExp(inputValueNormalizado)
 
-        if (input.length === 0)
+        if (input.length)
             return []
         
         const sugestoes = arrayTermos.filter(termo => removeAcentuacaoString(termo).match(regex))
@@ -962,67 +947,42 @@ function addListeners () {
         return sugestoes
     }
     
-    function mostrarResultados (input, arrayTermos, divSugestoes) {
-        const termos = autocompleteMatch(input, arrayTermos)
-        let lista = ''
+    const mostrarResultados =  (input, arrayTermos, divSugestoes) => {
 
-        divSugestoes.innerHTML = ''
-
-        for (i = 0; i < termos.length; i++) {
-            lista += '<li>' + termos[i] + '</li>'
-        }
-
-        if (input.value.length) {
-            divSugestoes.innerHTML = '<ul>' + lista + '</ul>'
-            divSugestoes.style.display = 'block'
-        }
-        else
-            divSugestoes.style.display = 'none'
-
-
-        
-        function config (divSugestoes) {
-            const ul = divSugestoes.querySelector('ul'),
-                li = divSugestoes.querySelectorAll('ul li')
+        const config = (divSugestoes) => {
+            const li = divSugestoes.querySelectorAll('ul li')
             
-            ul.style.listStyleType = "none"
-            ul.style.padding = '0px'
-            ul.style.margin = '0px'
             li.forEach(e => {
-                e.style.cursor = 'pointer'
-                e.style.padding = '5px 0'
-                e.style.margin = '0px'
-                e.addEventListener('mouseover', event => {
-                    li.forEach (el => {
-                        el.style.background = 'none'
-                    })
-                    event.target.style.background = '#eee'
-                    indice = -1
-                })
-                e.addEventListener('mouseleave', () => {
-                    li.forEach (el => {
-                        el.style.background = 'none'
-                    })
-                    indice = -1
-                })
+                e.addEventListener('mouseover', resetIndex)
+                e.addEventListener('mouseleave', resetIndex)
                 e.addEventListener('click', event => {
                     input.value = event.target.innerHTML
                     divSugestoes.style.display = 'none'
                     setAnalise(saveInfoAnalise())
                     updateSection(tipoIntimacao.value)
-                    indice = -1
+                    resetIndex()
                 })
             })
         }
+
+        const termos = autocompleteMatch(input, arrayTermos)
         
-        if (input.value.length)
+        const lista = termos.reduce((previous, current) => `${previous}<li>${current}</li>`, "")
+        
+        divSugestoes.innerHTML = `<ul>${lista}</ul>`
+
+        if (input.value.length) {
+            divSugestoes.style.display = 'block'
             config(divSugestoes)
+        } else {
+            divSugestoes.style.display = 'none'
+        }
     }
 
     processo.addEventListener('input', event => {
         const icon = document.querySelector('#iconCheckVerify')
         event.target.value = removeCaracteresProcesso(event.target.value)
-        if (event.target.value.length) {
+        if (event.target.value) {
             event.target.setAttribute("readOnly",true)
             setTimeout(() => {
                 sendMessageCheck(event, icon)
@@ -1056,7 +1016,7 @@ function addListeners () {
     tipoIntimacao.addEventListener('blur', () => {
         setTimeout(() => {
             sugestoesTipoIntimacao.style.display = 'none'
-            index = -1
+            resetIndex()
         }, 200)
     })
     
@@ -1075,16 +1035,16 @@ function addListeners () {
     localAudiencia.addEventListener('blur', () => {
         setTimeout(() => {
             sugestoesAudiencia.style.display = 'none'
-            index = -1
+            resetIndex()
         }, 200)
     })
 
     document.addEventListener('keydown', event => {   
-        let elements = document.querySelectorAll('div.sugestoes > ul > li'),
+        let elements = document.querySelectorAll('#sugestoes > ul > li'),
             input = sugestoesTipoIntimacao
 
         if (document.activeElement === localAudiencia) {
-            elements = document.querySelectorAll('div.sugestoes-audiencia > ul > li')
+            elements = document.querySelectorAll('#sugestoes-audiencia > ul > li')
             input = sugestoesAudiencia
         }
 
@@ -1095,7 +1055,7 @@ function addListeners () {
                     elements.forEach(e => {
                         e.style.background = 'none'
                     })
-                    elements[indice].style.background = '#eee'
+                    elements[indice].style.background = "rgba(172, 172, 172, 0.8)"
                 }
             }
             if (event.key === "ArrowDown") {
@@ -1104,7 +1064,7 @@ function addListeners () {
                     elements.forEach(e => {
                         e.style.background = 'none'
                     })
-                    elements[indice].style.background = '#eee'
+                    elements[indice].style.background = "rgba(172, 172, 172, 0.8)"
                 }
             }
             if (event.key === "Enter") {

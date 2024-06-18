@@ -153,12 +153,32 @@ input[type=number] {
     margin: 5px 0 0 0;
 }
 
-.sugestoes, .sugestoes-audiencia {
+.sugestoes {
     display: none;
     background: rgba(255, 255, 255, 0.8);
     z-index: 2;
     overflow-y: auto;
     max-height: 40vh;
+    position: absolute;
+    border: 1px #ccc;
+    align-items: center;
+    padding: 3px;
+}
+
+.sugestoes ul {
+    list-style: none;
+    padding: 0px;
+    margin: 0px;
+}
+
+.sugestoes li {
+    cursor: pointer;
+    padding: 5px 0;
+    margin: 0px;
+}
+
+.sugestoes li:hover {
+    background: rgba(172, 172, 172, 0.8);
 }
 
 .iconCheck {
