@@ -51,51 +51,58 @@ let data = {
 function updateEvent() {
     chrome.runtime.onMessage.addListener(
         function(request, sender, sendResponse) {
-
             
             if (request.texto) {
-                // Cria um elemento de área de transferência temporário
-                let tempInput = document.createElement("h2")
+                
+                const tempInput = document.createElement("h2")
                 let body = document.querySelector("body")
-                tempInput.style.position = 'fixed'
-                tempInput.style.opacity = 0
-                tempInput.style.textAlign = "center"
-                document.querySelector("*").style.removeProperty("font-family")
-                document.querySelector("*").style.setProperty("font-family",  "Times New Roman, serif", "important")
-                tempInput.style.fontSize = "16px"
-                tempInput.style.fontFamily = "Times New Roman, serif"
-                tempInput.style.color = "red"
-                tempInput.style.background = "none"
-                tempInput.style.fontWeight = "normal"
-                tempInput.style.border = "none"
-                tempInput.innerHTML = request.texto.replaceAll("&lt;","<").replaceAll("&gt;",">")
+                
                 if (!body) {
-                    body = document.createElement("body")
+                    body = document.createElement('body')
                     document.querySelector("html").appendChild(body)
-                    document.querySelector("html body").appendChild(tempInput)
-                } else {
-                    body.appendChild(tempInput)
                 }
                 
-                // Cria um objeto de seleção
-                let range = document.createRange()
-                range.selectNodeContents(tempInput)
+                tempInput.innerHTML = request.texto.replaceAll("&lt;","<").replaceAll("&gt;",">")
                 
-                // Seleciona o conteúdo
-                let selection = window.getSelection()
-                selection.addRange(range)
-                
-                // Copia o texto selecionado
-                document.execCommand('copy')
-                
-                // Limpa a seleção
-                selection.removeAllRanges()
+                const stylizer = () => {
+                    tempInput.style.position = 'fixed'
+                    tempInput.style.opacity = 0
+                    tempInput.style.textAlign = "center"
+                    document.querySelector("*").style.setProperty("font-family",  "Times New Roman, serif", "important")
+                    tempInput.style.fontSize = "16px"
+                    tempInput.style.fontFamily = "Times New Roman, serif"
+                    tempInput.style.color = "red"
+                    tempInput.style.background = "none"
+                    tempInput.style.fontWeight = "normal"
+                    tempInput.style.border = "none"
+                }
 
-                //Remove tempInput
-                body.removeChild(tempInput)
+                const listenerBody = async (records, observer) => {
+                    
+                    stylizer()
 
-                //Envia a resposta
-                sendResponse({resposta: request.texto})
+                    let range = document.createRange()
+
+                    range.selectNodeContents(tempInput)
+                    
+                    let selection = window.getSelection()
+                    selection.addRange(range)
+                    
+                    document.execCommand('copy')
+                    
+                    selection.removeAllRanges()
+
+                    body.removeChild(tempInput)
+
+                    sendResponse({resposta: request.texto})
+
+                    observer.disconnect()
+                }
+
+                const observer = new MutationObserver(listenerBody)
+                observer.observe(body, { childList: true })
+
+                body.appendChild(tempInput)
             } else {
                 if (request.get) {
                     let resultado = getCompetencia()

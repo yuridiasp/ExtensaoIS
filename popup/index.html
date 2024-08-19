@@ -18,7 +18,14 @@
     </div>
     <h3>EXTENSÃO PARA ANÁLISE DE IS</h3>
     <div>
-        <form action="">
+        <form id="configuration" action="">
+            <div id="fileFormatIS">
+                <label for="">Formato de arquivo da IS:</label>
+                <input type="radio" name="fileFormatIS" id="fileFormatISExcel" value="excel" checked>
+                <label for="fileFormatISExcel">Excel</label>
+                <input type="radio" name="fileFormatIS" id="fileFormatISWord" value="word">
+                <label for="fileFormatISWord">Word</label>
+            </div>
             <div id="datapub">
                 <label for="publicacao">Data da Publicação: </label>
                 <input type="date" name="publicacao" id="publicacao">

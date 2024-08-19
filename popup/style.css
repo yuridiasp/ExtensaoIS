@@ -116,8 +116,16 @@ input[type=number] {
     font-size: 0.9em;
 }
 
+#fileFormatIS {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 5px;
+}
+
 #datapub {
-    margin-top: 10px;
+    margin-top: 5px;
 }
 
 #processoCampos {

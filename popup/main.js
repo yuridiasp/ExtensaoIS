@@ -1,10 +1,18 @@
-const processo = document.querySelector("#processo"),
-    origem = document.querySelector("#origem"),
-    tipoIntimacao = document.querySelector("#tipoIntimacao"),
-    prazoInicial = document.querySelector("#prazoInicial"),
-    prazoFinal = document.querySelector("#prazoFinal"),
-    horario = document.querySelector("#horario"),
-    tarefaAvulsa = document.querySelector("#tarefaAvulsa"),
+const { 
+        fileFormatIS,
+        publicacao,
+        processo,
+        origem,
+        tipoIntimacao,
+        perito,
+        localPericia,
+        reu,
+        localAudiencia,
+        prazoInicial,
+        prazoFinal,
+        horario,
+        tarefaAvulsa
+    } = document.querySelector("#configuration"),
     genTXT = document.querySelector("#genTXT"),
     btnSetor = document.querySelectorAll(".btn-exc"),
     seletor = document.querySelectorAll(".seletor"),
@@ -12,16 +20,23 @@ const processo = document.querySelector("#processo"),
     btnPrazo = document.querySelectorAll(".prazo"),
     resetBtn = document.querySelector("#reset"),
     restoreBtn = document.querySelector("#restore"),
-    dataPub = document.querySelector('#publicacao'),
     secaoProcesso = document.querySelector('#processoCampos'),
     divPericia = document.querySelector('#divPericia'),
     divAudiencia = document.querySelector('#divAudiencia'),
-    perito = document.querySelector('#perito'),
-    localPericia = document.querySelector('#localPericia'),
-    reu = document.querySelector('#reu'),
-    localAudiencia = document.querySelector('#localAudiencia')
+    icon = document.querySelector('#iconCheckVerify'),
+    iconOrigem = document.querySelector('#iconCheckVerifyOrigem')
 
 let portal = null
+
+function resetIcons() {
+    const addClasses = ['fa-refresh'],
+        removeClasses = ['iconErroValidate', 'iconSucessValidate', 'fa-check-circle', 'fa-times-circle']
+
+    icon.classList.remove(...removeClasses)
+    iconOrigem.classList.remove(...removeClasses)
+    icon.classList.add(...addClasses)
+    iconOrigem.classList.add(...addClasses)
+}
 
 function sendMessageCheck(event, icon) {
     if (event.target.value.length || (!icon.classList.contains('iconCheck'))) {
@@ -543,55 +558,116 @@ function reset () {
     resetar.forEach(e => {
         e.value = ""
     })
+    genTXT.innerText = ""
+    tarefaAvulsa.checked = false
+    updateSection()
+    resetIcons()
+    processo.focus()
+}
+
+function existeOrigem() {
+    debugger
+    const processoValue = processo.value.length ? "'" + processo.value : '-'
+    const origemValue = origem.value.length ? "'" + origem.value : '-'
+    //dependente origem
+    if (origem.value.length)
+        return [origemValue, processoValue]
+    return [processoValue, origemValue]
 }
 
 async function gerarTxt (executor) {
     const init = `${prazoInicial.value.slice(8,10)}/${prazoInicial.value.slice(5,7)}`,
         final = `${prazoFinal.value.slice(8,10)}/${prazoFinal.value.slice(5,7)}`
 
-    if (tarefaAvulsa.checked && executor !== "OK")
-        executor += " (TAREFA AVULSA)"
-
-    let data
-
-    /* if (tipoIntimacao.value == "ALVARÁ" && executor == "(FINANCEIRO)")
-        executor =  "(FINANCEIRO - TAREFA AVULSA)" */
-
-    if (init == final)
-        if (horario.value.length)
-            data = `(${init} ÀS ${horario.value})`
-        else
-            data = `(${init})`
-    else
-        data = `(${init} - ${final})`
-
-    if ((localPericia.value.length || perito.value.length) && executor !== "OK")
-        if (origem.value.length && executor !== "OK")
-            genTXT.innerHTML = `<strong>${processo.value} (ORIGEM ${origem.value}) - ${tipoIntimacao.value} - ${data} - ${executor}</strong><br>PERITO: ${perito.value}<br>LOCAL: ${localPericia.value}`
-        else
-            if (executor !== "OK")
-                genTXT.innerHTML = `<strong>${processo.value} - ${tipoIntimacao.value} - ${data} - ${executor}</strong><br>PERITO: ${perito.value}<br>LOCAL: ${localPericia.value}`
+    if (fileFormatIS.value === 'excel') {
+        if (executor !== "OK") {
+            const dataInicial = new Date(prazoInicial.value + 'T00:00:00')
+            const prazoInterno = dataInicial.toLocaleDateString()
+            const dataFinal = new Date(prazoFinal.value + 'T00:00:00')
+            const prazoFatal = dataFinal.toLocaleDateString()
+            const [processoOrigem, processoDependente] = existeOrigem()
+            const description = tipoIntimacao.value
+            const peritoReu = perito.value || reu.value
+            const local = localPericia.value || localAudiencia.value
+            const tdStyle = ''
+            genTXT.innerHTML = `<table>
+                                    <tbody>
+                                        <tr style="text-align: center;">
+                                            <td>${processoOrigem}</td>
+                                            <td>${processoDependente}</td>
+                                            <td>${description.length ? description : "-"}</td>
+                                            <td>${prazoInterno.length ? prazoInterno : "-"}</td>
+                                            <td>${prazoFatal.length ? prazoFatal : "-"}</td>
+                                            <td>${horario.value.length ? horario.value : "-"}</td>
+                                            <td>${peritoReu.length ? peritoReu : "-"}</td>
+                                            <td>${local.length ? local : "-"}</td>
+                                            <td>${executor}</td>
+                                            <td>${tarefaAvulsa.checked ? "SIM" : "NÃO"}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>`
+            // Processo	Dependente	Descrição	Prazo Interno	Prazo Fatal	Horário	Perito/Réu	Local	Executor	Tarefa Avulsa	Justificativa`
+        } else {
+            genTXT.innerHTML = `<table>
+                <tbody>
+                    <tr>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>OK</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                </tbody>
+            </table>`
+        }
+    } else {
+        if (tarefaAvulsa.checked && executor !== "OK")
+            executor += " (TAREFA AVULSA)"
+    
+        let data
+    
+        if (init == final)
+            if (horario.value.length)
+                data = `(${init} ÀS ${horario.value})`
             else
-                genTXT.innerHTML = `<strong>${executor}</strong>`
-    else
-        if (localAudiencia.value.length || reu.value.length)
+                data = `(${init})`
+        else
+            data = `(${init} - ${final})`
+    
+        if ((localPericia.value.length || perito.value.length) && executor !== "OK")
             if (origem.value.length && executor !== "OK")
-                genTXT.innerHTML = `${processo.value} (ORIGEM ${origem.value}) - ${tipoIntimacao.value} - ${data} - ${executor}<br>RÉU: ${reu.value}<br>LOCAL: ${localAudiencia.value}`
+                genTXT.innerHTML = `<strong>${processo.value} (ORIGEM ${origem.value}) - ${tipoIntimacao.value} - ${data} - ${executor}</strong><br>PERITO: ${perito.value}<br>LOCAL: ${localPericia.value}`
             else
                 if (executor !== "OK")
-                    genTXT.innerHTML = `<strong>${processo.value} - ${tipoIntimacao.value} - ${data} - ${executor}</strong><br>RÉU: ${reu.value}<br>LOCAL: ${localAudiencia.value}`
+                    genTXT.innerHTML = `<strong>${processo.value} - ${tipoIntimacao.value} - ${data} - ${executor}</strong><br>PERITO: ${perito.value}<br>LOCAL: ${localPericia.value}`
                 else
                     genTXT.innerHTML = `<strong>${executor}</strong>`
         else
-            if (origem.value.length && executor !== "OK")
-                genTXT.innerHTML = `<strong>${processo.value} (ORIGEM ${origem.value}) - ${tipoIntimacao.value} - ${data} - ${executor}</strong>`
-            else
-                if (executor !== "OK")
-                    genTXT.innerHTML = `<strong>${processo.value} - ${tipoIntimacao.value} - ${data} - ${executor}</strong>`
+            if (localAudiencia.value.length || reu.value.length)
+                if (origem.value.length && executor !== "OK")
+                    genTXT.innerHTML = `<strong>${processo.value} (ORIGEM ${origem.value}) - ${tipoIntimacao.value} - ${data} - ${executor}</strong><br>RÉU: ${reu.value}<br>LOCAL: ${localAudiencia.value}`
                 else
-                    genTXT.innerHTML = `<strong>${executor}</strong>`
+                    if (executor !== "OK")
+                        genTXT.innerHTML = `<strong>${processo.value} - ${tipoIntimacao.value} - ${data} - ${executor}</strong><br>RÉU: ${reu.value}<br>LOCAL: ${localAudiencia.value}`
+                    else
+                        genTXT.innerHTML = `<strong>${executor}</strong>`
+            else
+                if (origem.value.length && executor !== "OK")
+                    genTXT.innerHTML = `<strong>${processo.value} (ORIGEM ${origem.value}) - ${tipoIntimacao.value} - ${data} - ${executor}</strong>`
+                else
+                    if (executor !== "OK")
+                        genTXT.innerHTML = `<strong>${processo.value} - ${tipoIntimacao.value} - ${data} - ${executor}</strong>`
+                    else
+                        genTXT.innerHTML = `<strong>${executor}</strong>`
+    }
+
 
     await copiar()
+    
 }
 
 function getExecutor (setor) {
@@ -651,8 +727,11 @@ function getExecutor (setor) {
 
 async function loadInfoAnalise (getIS) {
     
-    if (getIS.data_publicacao)
-        dataPub.value = getIS.data_publicacao
+    if (getIS.fileFormatIS)
+        fileFormatIS.value = getIS.fileFormatIS
+
+    if (getIS.publicacao)
+        publicacao.value = getIS.publicacao
 
     if (getIS.processo)
         processo.value = getIS.processo
@@ -694,7 +773,8 @@ async function loadInfoAnalise (getIS) {
 function saveInfoAnalise () {
 
     const is = {
-        data_publicacao: null,
+        fileFormatIS: null,
+        publicacao: null,
         processo: null,
         origem: null,
         tipoIntimacao: null,
@@ -712,8 +792,11 @@ function saveInfoAnalise () {
         }
     }
 
-    if (dataPub.value.length)
-        is.data_publicacao = dataPub.value
+    if (fileFormatIS.value.length)
+        is.fileFormatIS = fileFormatIS.value
+
+    if (publicacao.value.length)
+        is.publicacao = publicacao.value
 
     if (processo.value.length)
         is.processo = removeCaracteresProcesso(processo.value)
@@ -752,7 +835,8 @@ function saveInfoAnalise () {
 
 function resetAnalise() {
     const is = {
-        data_publicacao: dataPub.value,
+        fileFormatIS: fileFormatIS.value,
+        publicacao: publicacao.value,
         processo: null,
         origem: null,
         tipoIntimacao: null,
@@ -808,8 +892,8 @@ function calcularPrazo (prazo, competencia, parametro) {
         cont = 1,
         dayOfWeek
 
-    if (dataPub.value.length && tarefaAdvogado) {
-        const [ diaPublicacao, mesPublicacao, anoPublicacao] = dataPub.value.split('-')
+    if (publicacao.value.length && tarefaAdvogado) {
+        const [ diaPublicacao, mesPublicacao, anoPublicacao] = publicacao.value.split('-')
         dataFinal = new Date(diaPublicacao, Number(mesPublicacao)-1, anoPublicacao)
         dataInicial = new Date(diaPublicacao, Number(mesPublicacao)-1, anoPublicacao)
     }
@@ -892,15 +976,14 @@ function atualizaFocus() {
     }
 }
 
-function updateSection (intimacao) {
+function updateSection (intimacao = null) {
     divAudiencia.classList.add('oculto')
     divPericia.classList.add('oculto')
 
-    const intimacaoNormalizada = removeAcentuacaoString(intimacao),
-        isAudiencia = (intimacaoNormalizada.search('PERICIA') === 0),
-        isPericia = (intimacaoNormalizada.search('AUDIENCIA') === 0)
-
-    if (intimacao != null) {
+    if (intimacao) {
+        const intimacaoNormalizada = removeAcentuacaoString(intimacao),
+            isAudiencia = (intimacaoNormalizada.search('PERICIA') === 0),
+            isPericia = (intimacaoNormalizada.search('AUDIENCIA') === 0)
         if (isAudiencia){
             divPericia.classList.remove('oculto')
         }
@@ -928,7 +1011,7 @@ function addListeners () {
     let indice = -1
     const sugestoesTipoIntimacao = document.querySelector("#sugestoes"),
         sugestoesAudiencia = document.querySelector("#sugestoes-audiencia"),
-        termosTiposIntimacao = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO', 'MANIFESTAÇÃO SOBRE LAUDO COMPLEMENTAR','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PERÍCIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO','REMESSA CEJUSC','RECOLHER CUSTAS','AUDIÊNCIA DE INTERROGATÓRIO','MANIFESTAÇÃO SOBRE CERTIDÃO', 'MANIFESTAÇÃO SOBRE OFÍCIO', 'ANÁLISE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CONCILIAÇÃO + PROVAS','MANIFESTAÇÃO SOBRE RENAJUD', 'MANIFESTAÇÃO SOBRE PERITO + INDICAR TÉCNICOS + QUESITOS', 'CONTRARRAZÕES + CONTRAMINUTA', 'ANÁLISE DE SENTENÇA', 'RECURSO DE REVISTA', 'RECURSO ORDINÁRIO', 'AGRAVO INTERNO', 'EMBARGOS À EXECUÇÃO', 'AGRAVO DE PETIÇÃO', 'RESPOSTA À EXCEÇÃO DE INCOMPETÊNCIA', 'MANIFESTAÇÃO SOBRE EMBARGOS', 'AGRAVO DE INSTRUMENTO', 'ANÁLISE DE ACÓRDÃO', 'ANÁLISE DE DESPACHO', 'INDICAR ENDEREÇO', 'PROMOVER EXECUÇÃO', 'PROSSEGUIR EXECUÇÃO', 'ACOMPANHAR CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE PREVJUD', 'MANIFESTAÇÃO SOBRE SNIPER', 'MANIFESTAÇÃO SOBRE QUITAÇÃO', 'MANIFESTAÇÃO SOBRE PAGAMENTO', 'MANIFESTAÇÃO SOBRE LITISPENDÊNCIA', 'MANIFESTAÇÃO SOBRE AR', 'MANIFESTAÇÃO SOBRE MANDADO', 'MANIFESTAÇÃO SOBRE IMPUGNAÇÃO', 'MANIFESTAÇÃO SOBRE PENHORA', 'MANIFESTAÇÃO SOBRE REALIZAÇÃO DA PERÍCIA', 'MANIFESTAÇÃO SOBRE EXCEÇÃO DE PRÉ-EXECUTIVIDADE', 'PERÍCIA SOCIAL', 'MANIFESTAÇÃO SOBRE PRESCRIÇÃO', 'DECISÃO + QUESITOS'],
+        termosTiposIntimacao = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO', 'MANIFESTAÇÃO SOBRE LAUDO COMPLEMENTAR','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PERÍCIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO','REMESSA CEJUSC','RECOLHER CUSTAS','AUDIÊNCIA DE INTERROGATÓRIO','MANIFESTAÇÃO SOBRE CERTIDÃO', 'MANIFESTAÇÃO SOBRE OFÍCIO', 'ANÁLISE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CONCILIAÇÃO + PROVAS','MANIFESTAÇÃO SOBRE RENAJUD', 'MANIFESTAÇÃO SOBRE PERITO + INDICAR TÉCNICOS + QUESITOS', 'CONTRARRAZÕES + CONTRAMINUTA', 'ANÁLISE DE SENTENÇA', 'RECURSO DE REVISTA', 'RECURSO ORDINÁRIO', 'AGRAVO INTERNO', 'EMBARGOS À EXECUÇÃO', 'AGRAVO DE PETIÇÃO', 'RESPOSTA À EXCEÇÃO DE INCOMPETÊNCIA', 'MANIFESTAÇÃO SOBRE EMBARGOS', 'AGRAVO DE INSTRUMENTO', 'ANÁLISE DE ACÓRDÃO', 'ANÁLISE DE DESPACHO', 'INDICAR ENDEREÇO', 'PROMOVER EXECUÇÃO', 'PROSSEGUIR EXECUÇÃO', 'ACOMPANHAR CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE PREVJUD', 'MANIFESTAÇÃO SOBRE SNIPER', 'MANIFESTAÇÃO SOBRE QUITAÇÃO', 'MANIFESTAÇÃO SOBRE PAGAMENTO', 'MANIFESTAÇÃO SOBRE LITISPENDÊNCIA', 'MANIFESTAÇÃO SOBRE AR', 'MANIFESTAÇÃO SOBRE MANDADO', 'MANIFESTAÇÃO SOBRE IMPUGNAÇÃO', 'MANIFESTAÇÃO SOBRE PENHORA', 'MANIFESTAÇÃO SOBRE REALIZAÇÃO DA PERÍCIA', 'MANIFESTAÇÃO SOBRE EXCEÇÃO DE PRÉ-EXECUTIVIDADE', 'PERÍCIA SOCIAL', 'MANIFESTAÇÃO SOBRE PRESCRIÇÃO', 'DECISÃO + QUESITOS', 'MANIFESTAÇÃO SOBRE BACENJUD', 'CONTRAMINUTA'],
         termosLocaisAudiencias = Object.keys(locaisAudiencias)
 
     const resetIndex = () => {
@@ -950,12 +1033,12 @@ function addListeners () {
     const mostrarResultados =  (input, arrayTermos, divSugestoes) => {
 
         const config = (divSugestoes) => {
-            const li = divSugestoes.querySelectorAll('ul li')
+            const lis = divSugestoes.querySelectorAll('ul li')
             
-            li.forEach(e => {
-                e.addEventListener('mouseover', resetIndex)
-                e.addEventListener('mouseleave', resetIndex)
-                e.addEventListener('click', event => {
+            lis.forEach(li => {
+                li.addEventListener('mouseover', resetIndex)
+                li.addEventListener('mouseleave', resetIndex)
+                li.addEventListener('click', event => {
                     input.value = event.target.innerHTML
                     divSugestoes.style.display = 'none'
                     setAnalise(saveInfoAnalise())
@@ -980,7 +1063,6 @@ function addListeners () {
     }
 
     processo.addEventListener('input', event => {
-        const icon = document.querySelector('#iconCheckVerify')
         event.target.value = removeCaracteresProcesso(event.target.value)
         if (event.target.value) {
             event.target.setAttribute("readOnly",true)
@@ -991,7 +1073,6 @@ function addListeners () {
     })
 
     origem.addEventListener('input', event => {
-        const iconOrigem = document.querySelector('#iconCheckVerifyOrigem')
         event.target.value = removeCaracteresProcesso(event.target.value)
         if (event.target.value.length) {
             event.target.setAttribute("readOnly",true)
@@ -1039,7 +1120,7 @@ function addListeners () {
         }, 200)
     })
 
-    document.addEventListener('keydown', event => {   
+    document.addEventListener('keydown', event => {
         let elements = document.querySelectorAll('#sugestoes > ul > li'),
             input = sugestoesTipoIntimacao
 
@@ -1075,6 +1156,12 @@ function addListeners () {
                 updateSection(tipoIntimacao.value)
             }
         }
+    })
+
+    fileFormatIS.forEach(radio => {
+        radio.addEventListener('change', async () => {
+            await setAnalise(saveInfoAnalise())
+        })
     })
     
     seletor.forEach(element => {
@@ -1115,18 +1202,11 @@ function addListeners () {
         })
     })
 
-    resetBtn.addEventListener("click",() => {
-        reset()
-        updateSection(tipoIntimacao.value)
-    })
+    resetBtn.addEventListener("click", reset)
 
-    restoreBtn.addEventListener("click",() => {
-        restore()
-    })
+    restoreBtn.addEventListener("click", restore)
 
-    dataPub.addEventListener('change', () => {
-        setAnalise(saveInfoAnalise())
-    })
+    publicacao.addEventListener('change', () => setAnalise(saveInfoAnalise()))
 };
 
 

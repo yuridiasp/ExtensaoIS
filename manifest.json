@@ -1,6 +1,6 @@
 {
     "name": "IS Extension",
-    "version": "1.0",
+    "version": "1.2.0",
     "icons": {
         "180": "icon.png"
     },
@@ -22,11 +22,15 @@
               "content.js"
           ]
       }
-  ],
+    ],
     "permissions": [
         "tabs",
         "storage",
-	"clipboardRead"
+        "sidePanel",
+	    "clipboardRead"
     ],
+    "side_panel": {
+        "default_path": "popup/index.html"
+    },
     "manifest_version": 3
 }

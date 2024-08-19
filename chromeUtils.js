@@ -1,4 +1,6 @@
-
+function setPanel() {
+    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
+}
 
 function chromeRuntimeOnInstalledAddListener(listener) {
     chrome.runtime.onInstalled.addListener(listener)
