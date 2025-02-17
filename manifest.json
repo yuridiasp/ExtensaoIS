@@ -19,6 +19,7 @@
           ],
           "js": [
               "chromeUtils.js",
+              "requestDataFetch.js",
               "content.js"
           ]
       }

@@ -115,6 +115,16 @@ function updateEvent() {
     )
 }
 
+function getIdProcessFromDocument(document) {
+    const a = document.querySelector("body > section > section > div.fdt-espaco > div > div.fdt-pg-conteudo > div.table-responsive > table > tbody > tr > td.fdt-acao > div > div > a:nth-child(2)")
+    
+    console.log(a)
+    const indexProcess = 1
+    const idProcess = a.href.split("idPK=")[indexProcess]
+
+    return idProcess
+}
+
 function autoSearchProcess(processo) {
     const urlAtual = document.URL
     const urlPageBuscaProcesso = 'http://fabioribeiro.eastus.cloudapp.azure.com/adv/processos/default.asp'
@@ -148,20 +158,25 @@ function connectPort() {
                     body: urlEncodedData,
                 }).then(response => {
                     if (!response.ok) {
-                        throw new Error('Erro na requisição: ' + response.status);
+                        throw new Error('Erro na requisição: ' + response.status)
                     }
                     return response.text();
-                }).then(resposta => {
+                }).then(async resposta => {
                     let parser = new DOMParser()
                     let doc = parser.parseFromString(resposta,'text/html')
                     const element = doc.documentElement.querySelector("body > section > section > div.fdt-espaco > div > div.fdt-pg-conteudo > div.table-responsive > table > tbody > tr > td:nth-child(3)")
-                    
+
                     if (element) {
                         let verify = element.innerText.includes(request)
                         if (verify) {
                             autoSearchProcess(request)
                         }
-                        port.postMessage({checked: verify})
+                        const params = {
+                            module: "processos",
+                            id: getIdProcessFromDocument(doc.documentElement)
+                        }
+                        const result = await requestDataCliente(params)
+                        port.postMessage({checked: verify, result })
                     }
                     else {
                         port.postMessage({checked: false})

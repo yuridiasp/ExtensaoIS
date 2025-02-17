@@ -24,7 +24,17 @@ const {
     divPericia = document.querySelector('#divPericia'),
     divAudiencia = document.querySelector('#divAudiencia'),
     icon = document.querySelector('#iconCheckVerify'),
-    iconOrigem = document.querySelector('#iconCheckVerifyOrigem')
+    iconOrigem = document.querySelector('#iconCheckVerifyOrigem'),
+    processNumber = document.querySelector("#processNumber"),
+    processId = document.querySelector("#processId"),
+    processDefendant = document.querySelector("#processDefendant"),
+    processPesponsible = document.querySelector("#processPesponsible"),
+    processNature = document.querySelector("#processNature"),
+    processMerit = document.querySelector("#processMerit"),
+    processCity = document.querySelector("#processCity"),
+    processState = document.querySelector("#processState"),
+    processDistrict = document.querySelector("#processDistrict"),
+    dataProcessDiv = document.querySelector("#dataProcess")
 
 let portal = null
 
@@ -42,9 +52,9 @@ function sendMessageCheck(event, icon) {
     if (event.target.value.length || (!icon.classList.contains('iconCheck'))) {
         const addClasses = ['fa-refresh', 'iconCheck'],
             removeClasses = ['iconErroValidate', 'iconSucessValidate', 'fa-check-circle', 'fa-times-circle']
-
         icon.classList.remove(...removeClasses)
         icon.classList.add(...addClasses)
+        limpartDataProcessList()
     }
 
     chrome.tabs.query({}, function(tabs) {
@@ -65,11 +75,41 @@ function sendMessageCheck(event, icon) {
         port.postMessage(event.target.value)
     
         port.onMessage.addListener(function(msg) {
-            
+            atualizarDataProcessList(msg.result)
             atualizarIconCheck(msg.checked, icon, event.target)
         })
 
     })
+}
+
+function limpartDataProcessList() {
+    processNature.parentElement.classList.remove("fail")
+    dataProcessDiv.style.display = "none"
+    processNumber.innerHTML = ""
+    processId.innerHTML = ""
+    processDefendant.innerHTML = ""
+    processPesponsible.innerHTML = ""
+    processNature.innerHTML = ""
+    processMerit.innerHTML = ""
+    processCity.innerHTML = ""
+    processState.innerHTML = ""
+    processDistrict.innerHTML = ""
+}
+
+function atualizarDataProcessList(dataProcess) {
+    
+    if (dataProcess) {
+        dataProcessDiv.style.display = "block"
+        processNumber.innerHTML = dataProcess.processo.origem
+        processId.innerHTML = dataProcess.processo.id
+        processDefendant.innerHTML = dataProcess.processo.reu
+        processPesponsible.innerHTML = dataProcess.processo.responsavel
+        processNature.innerHTML = dataProcess.processo.natureza
+        processMerit.innerHTML = dataProcess.processo.merito
+        processCity.innerHTML = dataProcess.processo.cidade
+        processState.innerHTML = dataProcess.processo.estado
+        processDistrict.innerHTML = dataProcess.processo.vara
+    }
 }
 
 function atualizarIconCheck (result, icon, target) {
@@ -158,6 +198,11 @@ function calculaPascoa(ano) {
 }
 
 function FeriadosFixos (ano, competencia, parametro,) {
+    const numero_processo = processo.value
+    const idProcessoTrabalhista = "5"
+    const indexIdProcessoNumeracaoUnica = 13
+    const lengthNumeroProcessoNumeracaoUnica = 20
+    const isTrabalhista = numero_processo.length === lengthNumeroProcessoNumeracaoUnica && numero_processo[indexIdProcessoNumeracaoUnica] === idProcessoTrabalhista
     let aux = competencia ? competencia.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase() : null
     const tarefaContatar = (parametro == 1),
         tarefaAdvogado = (parametro == 2),
@@ -213,13 +258,14 @@ function FeriadosFixos (ano, competencia, parametro,) {
             [9,12], //DIA DAS CRIANÇAS - DIA DA PADROEIRA DO BRASIL
             [10,2], //FINADOS
             [10,15], //PROCLAMAÇÃO DA REPÚBLICA
+            [10,20], //DIA DA CONSCIÊNCIA NEGRA
             [11,25], //NATAL
         ],
         recesso_forense : forense, //Recesso Forense 20/12 a 06/01
         ferias_advogados: advogados, //Recesso dos advogados 20/12 a 20/01 Art. 220 NCPC
         justica_nacional: [
             [7,11], //DIA DO MAGISTRADO
-            [9,28], //DIA DO FUNCIONÁRIO PÚBLICO
+            [9, isTrabalhista ? 31 : 28], //DIA DO FUNCIONÁRIO PÚBLICO
             [10,1], //LEI FEDERAL Nº 5.010/66
             [11,8], //DIA DA JUSTIÇA
         ],
@@ -562,6 +608,7 @@ function reset () {
     tarefaAvulsa.checked = false
     updateSection()
     resetIcons()
+    limpartDataProcessList()
     processo.focus()
 }
 
@@ -589,7 +636,7 @@ async function gerarTxt (executor) {
             const description = tipoIntimacao.value
             const peritoReu = perito.value || reu.value
             const local = localPericia.value || localAudiencia.value
-            const tdStyle = ''
+            
             genTXT.innerHTML = `<table>
                                     <tbody>
                                         <tr style="text-align: center;">
@@ -697,7 +744,7 @@ function getExecutor (setor) {
         }
         return "LAIS"
     } */
-    if (setor == "CÍVIL") {
+    if (setor == "CÍVEL") {
         const ala = ['0','1', '8']
         const gabriel = ['2','3', '4', '6']
         //const rodrigo = ['5','7','9','4','6','8']
@@ -710,13 +757,13 @@ function getExecutor (setor) {
         return "RODRIGO"
     }
 
-    if (setor == "PREVIDENCIÁRIO")
+    if (setor == "PREVIDENCIÁRIA")
         return "KEVEN"
 
     if (setor == "ADM")
         return "(ADM)"
 
-    if (setor == "FINANCEIRO")
+    if (setor == "FINANCEIRA")
         return "(FINANCEIRO)"
 
     if (setor == "TRABALHISTA")
@@ -1011,7 +1058,7 @@ function addListeners () {
     let indice = -1
     const sugestoesTipoIntimacao = document.querySelector("#sugestoes"),
         sugestoesAudiencia = document.querySelector("#sugestoes-audiencia"),
-        termosTiposIntimacao = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO', 'MANIFESTAÇÃO SOBRE LAUDO COMPLEMENTAR','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PERÍCIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO','REMESSA CEJUSC','RECOLHER CUSTAS','AUDIÊNCIA DE INTERROGATÓRIO','MANIFESTAÇÃO SOBRE CERTIDÃO', 'MANIFESTAÇÃO SOBRE OFÍCIO', 'ANÁLISE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CONCILIAÇÃO + PROVAS','MANIFESTAÇÃO SOBRE RENAJUD', 'MANIFESTAÇÃO SOBRE PERITO + INDICAR TÉCNICOS + QUESITOS', 'CONTRARRAZÕES + CONTRAMINUTA', 'ANÁLISE DE SENTENÇA', 'RECURSO DE REVISTA', 'RECURSO ORDINÁRIO', 'AGRAVO INTERNO', 'EMBARGOS À EXECUÇÃO', 'AGRAVO DE PETIÇÃO', 'RESPOSTA À EXCEÇÃO DE INCOMPETÊNCIA', 'MANIFESTAÇÃO SOBRE EMBARGOS', 'AGRAVO DE INSTRUMENTO', 'ANÁLISE DE ACÓRDÃO', 'ANÁLISE DE DESPACHO', 'INDICAR ENDEREÇO', 'PROMOVER EXECUÇÃO', 'PROSSEGUIR EXECUÇÃO', 'ACOMPANHAR CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE PREVJUD', 'MANIFESTAÇÃO SOBRE SNIPER', 'MANIFESTAÇÃO SOBRE QUITAÇÃO', 'MANIFESTAÇÃO SOBRE PAGAMENTO', 'MANIFESTAÇÃO SOBRE LITISPENDÊNCIA', 'MANIFESTAÇÃO SOBRE AR', 'MANIFESTAÇÃO SOBRE MANDADO', 'MANIFESTAÇÃO SOBRE IMPUGNAÇÃO', 'MANIFESTAÇÃO SOBRE PENHORA', 'MANIFESTAÇÃO SOBRE REALIZAÇÃO DA PERÍCIA', 'MANIFESTAÇÃO SOBRE EXCEÇÃO DE PRÉ-EXECUTIVIDADE', 'PERÍCIA SOCIAL', 'MANIFESTAÇÃO SOBRE PRESCRIÇÃO', 'DECISÃO + QUESITOS', 'MANIFESTAÇÃO SOBRE BACENJUD', 'CONTRAMINUTA'],
+        termosTiposIntimacao = ['MANIFESTAÇÃO','MANIFESTAÇÃO SOBRE DOCUMENTOS','MANIFESTAÇÃO SOBRE PERÍCIA','MANIFESTAÇÃO SOBRE ACORDO','MANIFESTAÇÃO SOBRE CÁLCULOS','MANIFESTAÇÃO SOBRE LAUDO', 'MANIFESTAÇÃO SOBRE LAUDO COMPLEMENTAR','AUDIÊNCIA DE CONCILIAÇÃO','AUDIÊNCIA INICIAL','AUDIÊNCIA DE INSTRUÇÃO','AUDIÊNCIA DE INSTRUÇÃO E JULGAMENTO','AUDIÊNCIA UNA','EMENDAR','DECISÃO','DECISÃO SUSPENSÃO','DECISÃO INCOMPETÊNCIA','DECISÃO + RECOLHER CUSTAS','PERÍCIA MÉDICA','PERÍCIA TÉCNICA','PERÍCIA GRAFOTÉCNICA','PERÍCIA PAPILOSCÓPICA','PERÍCIA PSIQUIÁTRICA','PERÍCIA PSICOLÓGICA','ACÓRDÃO','SENTENÇA','PAUTA','CONTRARRAZÕES','DESPACHO','ARQUIVO','INDICAR BENS','DADOS BANCÁRIOS','ALVARÁ','DESPACHO ALVARÁ','RPV','PROVAS','RÉPLICA','REMESSA','DESCIDA DOS AUTOS','TERMO DE AUDIÊNCIA','JULGAMENTO ANTECIPADO','MANIFESTAÇÃO SOBRE DEPÓSITO','QUESITOS + INDICAR TÉCNICOS','QUESITOS','MANIFESTAÇÃO SOBRE HONORÁRIOS','MANIFESTAÇÃO SOBRE ALVARÁ','PLANILHA','MANIFESTAÇÃO SOBRE SISBAJUD','RETIRADO DE PAUTA','RAZÕES FINAIS','MANIFESTAÇÃO SOBRE INFOJUD','DILAÇÃO','ATO ORDINATÓRIO','REMESSA CEJUSC','RECOLHER CUSTAS','AUDIÊNCIA DE INTERROGATÓRIO','MANIFESTAÇÃO SOBRE CERTIDÃO', 'MANIFESTAÇÃO SOBRE OFÍCIO', 'ANÁLISE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE CONCILIAÇÃO + PROVAS','MANIFESTAÇÃO SOBRE RENAJUD', 'MANIFESTAÇÃO SOBRE CNIB', 'MANIFESTAÇÃO SOBRE PERITO + INDICAR TÉCNICOS + QUESITOS', 'CONTRARRAZÕES + CONTRAMINUTA', 'ANÁLISE DE SENTENÇA', 'RECURSO DE REVISTA', 'RECURSO ORDINÁRIO', 'AGRAVO INTERNO', 'EMBARGOS À EXECUÇÃO', 'AGRAVO DE PETIÇÃO', 'RESPOSTA À EXCEÇÃO DE INCOMPETÊNCIA', 'MANIFESTAÇÃO SOBRE EMBARGOS', 'AGRAVO DE INSTRUMENTO', 'ANÁLISE DE ACÓRDÃO', 'ANÁLISE DE DESPACHO', 'INDICAR ENDEREÇO', 'PROMOVER EXECUÇÃO', 'PROSSEGUIR EXECUÇÃO', 'ACOMPANHAR CUMPRIMENTO', 'MANIFESTAÇÃO SOBRE PREVJUD', 'MANIFESTAÇÃO SOBRE SNIPER', 'MANIFESTAÇÃO SOBRE QUITAÇÃO', 'MANIFESTAÇÃO SOBRE PAGAMENTO', 'MANIFESTAÇÃO SOBRE LITISPENDÊNCIA', 'MANIFESTAÇÃO SOBRE AR', 'MANIFESTAÇÃO SOBRE MANDADO', 'MANIFESTAÇÃO SOBRE IMPUGNAÇÃO', 'MANIFESTAÇÃO SOBRE PENHORA', 'MANIFESTAÇÃO SOBRE REALIZAÇÃO DA PERÍCIA', 'MANIFESTAÇÃO SOBRE EXCEÇÃO DE PRÉ-EXECUTIVIDADE', 'PERÍCIA SOCIAL', 'MANIFESTAÇÃO SOBRE PRESCRIÇÃO', 'DECISÃO + QUESITOS', 'MANIFESTAÇÃO SOBRE BACENJUD', 'CONTRAMINUTA'],
         termosLocaisAudiencias = Object.keys(locaisAudiencias)
 
     const resetIndex = () => {
@@ -1181,9 +1228,16 @@ function addListeners () {
         element.addEventListener("click", event => {
             let setor = event.target.value
             let executor = getExecutor(setor)
-            gerarTxt(executor)
-            setAnaliseOld(saveInfoAnalise())
-            setAnalise(resetAnalise())
+            if (dataProcessDiv.style.display !== "none" || setor === "OK") {
+                if (setor !== processNature.innerHTML) {
+                    processNature.parentElement.classList.add("fail")
+                } else {
+                    processNature.parentElement.classList.remove("fail")
+                }
+                gerarTxt(executor)
+                setAnaliseOld(saveInfoAnalise())
+                setAnalise(resetAnalise())
+            }
         })
     })
 
