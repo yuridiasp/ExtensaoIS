@@ -131,7 +131,6 @@ function autoSearchProcess(processo) {
 function getIdProcessFromDocument(document) {
     const a = document.querySelector("body > section > section > div.fdt-espaco > div > div.fdt-pg-conteudo > div.table-responsive > table > tbody > tr > td.fdt-acao > div > div > a:nth-child(2)")
     
-    console.log(a)
     const indexProcess = 1
     const idProcess = a.href.split("idPK=")[indexProcess]
 

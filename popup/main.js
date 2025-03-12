@@ -38,6 +38,22 @@ const {
 
 let portal = null
 
+async function sendMessageInnerTabs (message, callback, queryOptions = {}) {
+
+    chrome.tabs.query(queryOptions, tabs => chrome.tabs.sendMessage(tabs[0].id, message, callback))
+}
+
+async function connectOnPortForSendMessage({ message, queryOptions = {}, connectInfo = null, onMessageCallback }) {
+    chrome.tabs.query(queryOptions, function(tabs) {
+        
+        const port = chrome.tabs.connect(tabs[0].id, connectInfo)
+        
+        port.postMessage(message)
+    
+        port.onMessage.addListener(onMessageCallback)
+    })
+}
+
 function resetIcons() {
     const addClasses = ['fa-refresh'],
         removeClasses = ['iconErroValidate', 'iconSucessValidate', 'fa-check-circle', 'fa-times-circle']
@@ -48,38 +64,24 @@ function resetIcons() {
     iconOrigem.classList.add(...addClasses)
 }
 
-function sendMessageCheck(event, icon) {
-    if (event.target.value.length || (!icon.classList.contains('iconCheck'))) {
+function sendMessageCheck(element, icon) {
+    if (element.value.length || (!icon.classList.contains('iconCheck'))) {
         const addClasses = ['fa-refresh', 'iconCheck'],
             removeClasses = ['iconErroValidate', 'iconSucessValidate', 'fa-check-circle', 'fa-times-circle']
         icon.classList.remove(...removeClasses)
         icon.classList.add(...addClasses)
         limpartDataProcessList()
     }
-
-    chrome.tabs.query({}, function(tabs) {
-
-        let cont = 0
-        const urlSistema = "http://fabioribeiro.eastus.cloudapp.azure.com/"
-
-        for (let index = 0; index < tabs.length; index++) {
-            
-            if (tabs[index].url.search(urlSistema) == 0) {
-                cont = index
-                break
-            } 
-        }
-        
-        const port = chrome.tabs.connect(tabs[cont].id,{name: 'check'})
-        
-        port.postMessage(event.target.value)
     
-        port.onMessage.addListener(function(msg) {
-            atualizarDataProcessList(msg.result)
-            atualizarIconCheck(msg.checked, icon, event.target)
-        })
+    const message = element.value
+    const queryOptions = { url: "http://fabioribeiro.eastus.cloudapp.azure.com/*" }
+    const connectInfo = { name: 'check' }
+    const onMessageCallback = (msg) => {
+        atualizarDataProcessList(msg.result)
+        atualizarIconCheck(msg.checked, icon, element)
+    }
 
-    })
+    connectOnPortForSendMessage({ message, queryOptions, connectInfo, onMessageCallback })
 }
 
 function limpartDataProcessList() {
@@ -130,26 +132,21 @@ function removeCaracteresProcesso(value) {
 }
 
 async function sendMessage(prazo, parametro) {
-    chrome.tabs.query({}, function(tabs) {
-        let cont = 0
+    const message = {get: 'local'}
+    const callback = async (response) => {
+        portal = response.portal
+        calcularPrazo(prazo,response.competencia, parametro)
+        setAnalise(saveInfoAnalise())
+    }
+    const queryOptions = {
+        url: [
+            "https://www.tjse.jus.br/tjnet/portaladv/*",
+            "https://pje.trt20.jus.br/pjekz/processo/*",
+            "https://pje.trt15.jus.br/pjekz/processo/*",
+        ]
+    }
 
-        for (let index = 0; index < tabs.length; index++) {
-            const isTJSE = (tabs[index].url.search("https://www.tjse.jus.br/tjnet/portaladv/") == 0),
-                isTRT20 = (tabs[index].url.search("https://pje.trt20.jus.br/pjekz/processo/") == 0),
-                isTRT15 = (tabs[index].url.search("https://pje.trt15.jus.br/pjekz/processo/")== 0)
-
-            if (isTJSE || isTRT20 || isTRT15) {
-                cont = index
-                break
-            } 
-        }
-
-        chrome.tabs.sendMessage(tabs[cont].id, {get: 'local'}, async function(response) {
-            portal = response.portal
-            calcularPrazo(prazo,response.competencia, parametro)
-            setAnalise(saveInfoAnalise())
-        })
-    })
+    sendMessageInnerTabs(message, callback, queryOptions)
 }
 
 function getLocalProcesso(prazo, parametro) {
@@ -579,17 +576,17 @@ function calculaFeriados(competencia, parametro) {
 }
 
 async function copiar() {
+    const message = {texto: genTXT.innerHTML}
+    const queryOptions = { active: true, currentWindow: true }
+    const callback = async (response) => {
+        if (!chrome.runtime.lastError) {
+            console.log("Copiado! Mensagem: " + response.resposta)
+        } else {
+            console.log("Houve um erro: " + chrome.runtime.lastError.message)
+        }
+    }
 
-    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-
-        chrome.tabs.sendMessage(tabs[0].id, {texto: genTXT.innerHTML}, async function(response) {
-            if (!chrome.runtime.lastError) {
-                console.log("Copiado! Mensagem: " + response.resposta)
-            } else {
-                console.log("Houve um erro: " + chrome.runtime.lastError.message)
-            }
-        })
-    })
+    sendMessageInnerTabs(message, callback, queryOptions)
 }
 
 async function restore() {
@@ -1109,63 +1106,44 @@ function addListeners () {
         }
     }
 
-    processo.addEventListener('input', event => {
-        event.target.value = removeCaracteresProcesso(event.target.value)
-        if (event.target.value) {
-            event.target.setAttribute("readOnly",true)
+    const numberProcessValidation = (target, icon) => {
+        target.value = removeCaracteresProcesso(target.value)
+        if (target.value) {
+            target.setAttribute("readOnly",true)
             setTimeout(() => {
-                sendMessageCheck(event, icon)
+                sendMessageCheck(target, icon)
             }, 10)
         }
-    })
+    }
 
-    origem.addEventListener('input', event => {
-        event.target.value = removeCaracteresProcesso(event.target.value)
-        if (event.target.value.length) {
-            event.target.setAttribute("readOnly",true)
-            setTimeout(() => {
-                sendMessageCheck(event, iconOrigem)
-            }, 10)
-        }
-    })
-
-    tipoIntimacao.addEventListener('input', e => {
+    const delayForShowResults = (element, termosElement, sugestoesTiposElement) => {
         setTimeout(() => {
-            mostrarResultados(e.target, termosTiposIntimacao, sugestoesTipoIntimacao)
+            mostrarResultados(element, termosElement, sugestoesTiposElement)
         }, 100)
-    })
+    }
 
-    tipoIntimacao.addEventListener('focus', e => {
+    const updateDisplayElement = (element) => {
         setTimeout(() => {
-            mostrarResultados(e.target, termosTiposIntimacao, sugestoesTipoIntimacao)
-        }, 100)
-    })
-
-    tipoIntimacao.addEventListener('blur', () => {
-        setTimeout(() => {
-            sugestoesTipoIntimacao.style.display = 'none'
+            element.style.display = 'none'
             resetIndex()
         }, 200)
-    })
+    }
+
+    processo.addEventListener('input', ({ target }) => numberProcessValidation(target, icon))
+
+    origem.addEventListener('input', ({ target }) => numberProcessValidation(target, iconOrigem))
+
+    tipoIntimacao.addEventListener('input', ({ target }) => delayForShowResults(target, termosTiposIntimacao, sugestoesTipoIntimacao))
+
+    tipoIntimacao.addEventListener('focus', ({ target }) => delayForShowResults(target, termosTiposIntimacao, sugestoesTipoIntimacao))
+
+    tipoIntimacao.addEventListener('blur', () => updateDisplayElement(sugestoesTipoIntimacao))
     
-    localAudiencia.addEventListener('input', e => {
-        setTimeout(() => {
-            mostrarResultados(e.target, termosLocaisAudiencias, sugestoesAudiencia)
-        }, 100)
-    })
+    localAudiencia.addEventListener('input', ({ target }) => delayForShowResults(target, termosLocaisAudiencias, sugestoesAudiencia))
 
-    localAudiencia.addEventListener('focus', e => {
-        setTimeout(() => {
-            mostrarResultados(e.target, termosLocaisAudiencias, sugestoesAudiencia)
-        }, 100)
-    })
+    localAudiencia.addEventListener('focus', ({ target }) => delayForShowResults(target, termosLocaisAudiencias, sugestoesAudiencia))
 
-    localAudiencia.addEventListener('blur', () => {
-        setTimeout(() => {
-            sugestoesAudiencia.style.display = 'none'
-            resetIndex()
-        }, 200)
-    })
+    localAudiencia.addEventListener('blur', () => updateDisplayElement(sugestoesAudiencia))
 
     document.addEventListener('keydown', event => {
         let elements = document.querySelectorAll('#sugestoes > ul > li'),
