@@ -195,12 +195,13 @@ function calculaPascoa(ano) {
 }
 
 function FeriadosFixos (ano, competencia, parametro,) {
+    
     const numero_processo = processo.value
     const idProcessoTrabalhista = "5"
     const indexIdProcessoNumeracaoUnica = 13
     const lengthNumeroProcessoNumeracaoUnica = 20
     const isTrabalhista = numero_processo.length === lengthNumeroProcessoNumeracaoUnica && numero_processo[indexIdProcessoNumeracaoUnica] === idProcessoTrabalhista
-    let aux = competencia ? competencia.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase() : null
+    let competenciaNormalizada = competencia ? competencia.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toUpperCase() : null
     const tarefaContatar = (parametro == 1),
         tarefaAdvogado = (parametro == 2),
         indexDia = 1,
@@ -517,11 +518,11 @@ function FeriadosFixos (ano, competencia, parametro,) {
         
         const date = Object.entries(datas)
 
-        if (aux) {
-            for (const [key,value] of date) {
-                    if (aux.search(key) > -1){
-                        value.forEach(feriado => {
-                            resultados.push(new Date(ano,feriado[indexMes],feriado[indexDia]))
+        if (competenciaNormalizada) {
+            for (const [jurisdicao, feriados] of date) {
+                    if (competenciaNormalizada.includes(jurisdicao)) {
+                        feriados.forEach(feriado => {
+                            resultados.push(new Date(ano, feriado[indexMes], feriado[indexDia]))
                         })
                     }
             }
@@ -538,7 +539,7 @@ function FeriadosFixos (ano, competencia, parametro,) {
             resultados.push(new Date(ano-1, feriado[indexMes], feriado[indexDia]))
         }
     })
-    
+    console.log(resultados)
     return resultados
 }
 
@@ -647,6 +648,7 @@ async function gerarTxt (executor) {
                                             <td>${local.length ? local : "-"}</td>
                                             <td>${executor}</td>
                                             <td>${tarefaAvulsa.checked ? "SIM" : "NÃO"}</td>
+                                            <td>-</td>
                                         </tr>
                                     </tbody>
                                 </table>`
@@ -654,10 +656,11 @@ async function gerarTxt (executor) {
         } else {
             genTXT.innerHTML = `<table>
                 <tbody>
-                    <tr>
+                    <tr style="text-align: center;">
                         <td>-</td>
                         <td>-</td>
                         <td>OK</td>
+                        <td>-</td>
                         <td>-</td>
                         <td>-</td>
                         <td>-</td>
@@ -745,7 +748,7 @@ function getExecutor (setor) {
         const ala = ['0','1', '8']
         const gabriel = ['2','3', '4', '6']
         //const rodrigo = ['5','7','9','4','6','8']
-        if (intimacao.search("PAUTA") != 0 && intimacao.search("AUDIÊNCIA") != 0 && numero_processo.length === 12) {
+        if (intimacao.search("AUDIÊNCIA") != 0 && numero_processo.length === 12) {
             if (gabriel.includes(digito))
                 return "GABRIEL"
             if (ala.includes(digito))
